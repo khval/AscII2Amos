@@ -23,6 +23,36 @@ using namespace std;
 
 char src_token_buffer[1000];
 
+struct symbol 
+{
+	unsigned short token;
+	const char *symbol;
+};
+
+struct symbol Symbol[]=
+{
+	{0xFF8E,">="},	// numbers 
+	{0xFF7A,"<="},	// numbers
+	{0xFF98,">="},
+	{0xFF84,"<="},
+	{0xFF66,"<>"},
+	{0x005C,","},
+	{0x0064,";"},
+	{0x0074,"("},
+	{0x007C,")"},
+	{0x0084,"["},
+	{0x008C,"]"},
+	{0xFFC0,"+"},
+	{0xFFCA,"-"},
+	{0xFFA2,"="},
+	{0xFFE2,"*"},
+	{0xFFEC,"/"},
+	{0xFFB6,">"},
+	{0xFFAC,"<"},
+	{0xFFF6,"^"}
+};
+
+
 int toAmosFloat(double v)
 {
 	int n;
@@ -97,6 +127,28 @@ char *tokenWriter(char *buffer,const char *fmt,  ... )
 
 	return buffer;
 }
+
+char *symbolToken(char *token_buffer, const char **ptr)
+{
+	int n;
+	int l;
+
+	for (n=0;n<sizeof(Symbol)/sizeof(struct symbol );n++)
+	{
+		l = strlen(Symbol[n].symbol);
+
+		if ( strncmp( *ptr, Symbol[n].symbol, l) == 0 )
+		{
+			printf("[%08X] ",  Symbol[n].token);
+
+			*ptr = (((char *) *ptr) + l);
+			token_buffer = tokenWriter( token_buffer, "  2 ",  Symbol[n].token );
+			return token_buffer;
+		}
+	}
+	return NULL;
+}
+
 
 char *_start_of_line_( char *token_buffer, char length, char level )
 {
@@ -214,6 +266,7 @@ char *_variable_( char *token_buffer, const char **ptr)
 		switch(*s)
 		{
 			case ' ':
+			case '=':
 			case '+':
 			case '-':
 			case '/':
@@ -230,6 +283,7 @@ char *_variable_( char *token_buffer, const char **ptr)
 				*d++=*s; length++;
 		}
 	}
+
 	*d = 0;
 	*ptr = s;
 
@@ -502,17 +556,32 @@ int main(int args, char **arg)
 						}
 						else		// think this is variable
 						{
-							ptr_token_buffer = _variable_(ptr_token_buffer, &ptr );
+							char *ret;
+
+							ret =symbolToken(ptr_token_buffer , &ptr);
+							if (ret)
+							{
+
+
+								ptr_token_buffer = ret;	// symbol token found.
+							}
+							else
+							{
+
+
+								ptr_token_buffer = _variable_(ptr_token_buffer, &ptr );
+							}
 						}
 						Delay(10);
 					}
+
 
 					if (*ptr==' ') ptr++;
 				} while ( *ptr );
 
 				ptr_token_buffer = _end_of_line_(ptr_token_buffer );
 
-//				printf("[%s]\n",reformated_str);
+
 				free(reformated_str);
 				reformated_str = NULL;
 

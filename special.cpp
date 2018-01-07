@@ -1,3 +1,29 @@
+#include <stdlib.h>
+#include "support_functions.h"
+#include "special.h"
+
+
+struct special Special[]= 
+
+{
+	{"On",cmdOn},
+	{"Else",cmdElse},
+	{"Data",cmdData},
+	{"ElseIf",cmdElseIf},
+	{"ExitIf",cmdExitIf},
+	{"Then",cmdThen},
+	{"Equ",cmdEqu},
+	{"Lvo",cmdLvo},
+//	{"Struc",cmdStruc},
+//	{"Procedure",cmdProcedure},
+//	{"Proc",cmdProc},
+	{"For",cmdFor},
+	{"Repeat",cmdRepeat},
+	{"While",cmdWhile},
+	{"Until",cmdUntil},
+	{"If",cmdIf},
+	{"Do",cmdDo}
+};
 
 
 char *cmdExit( char *token_buffer, const char **ptr)
@@ -80,13 +106,7 @@ char *cmdLvo( char *token_buffer, const char **ptr)
 
 char *cmdUntil( char *token_buffer, const char **ptr)
 {
-	token_buffer = tokenWriter( token_buffer, " 2 ",0x2A54);
-	return token_buffer;
-}
-
-char *cmdUntil( char *token_buffer, const char **ptr)
-{
-	token_buffer = tokenWriter( token_buffer, " 2 : 2 ",0x025C, 0,);
+	token_buffer = tokenWriter( token_buffer, " 2 : 2 ",0x025C, 0);
 	return token_buffer;
 }
 
@@ -95,3 +115,4 @@ char *cmdThen( char *token_buffer, const char **ptr)
 	token_buffer = tokenWriter( token_buffer, " 2 ",0x02C6);
 	return token_buffer;
 }
+

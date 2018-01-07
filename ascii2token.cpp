@@ -8,6 +8,8 @@
 #include <proto/amosextension.h>
 #include "init.h"
 #include "what_is.h"
+#include "support_functions.h"
+#include "special.h"
 
 #include <iostream>
 #include <string>
@@ -15,10 +17,6 @@
 using namespace std;
 
 // For this test we only have one command..
-
-#define my_va_ptr( list, type ) \
-	*(( type * ) buffer) = (type) va_arg( list, int ); \
-	buffer+=sizeof( type ); 
 
 
 char src_token_buffer[1000];
@@ -92,41 +90,6 @@ int toAmosFloat(double v)
 	return data;
 }
 
-char *tokenWriter(char *buffer,const char *fmt,  ... )
-{
-	int _len = 0;
-
-	char *sptr;
-	const char *c;
-	va_list l;
-	va_start( l,fmt);
-
-	for (c=fmt;*c;c++)
-	{
-		switch (*c)
-		{
-			case '4':
-			case 'l':	my_va_ptr( l, int ); break;
-
-			case '2':
-			case 'w':	my_va_ptr( l, short );  break;
-
-			case '1':
-			case 'b':	my_va_ptr( l, char ); break;
-
-			case 's':
-					_len = 0;
-					for (sptr = (char *) va_arg(l, int ); *sptr; sptr++)
-					{
-						*buffer++=*sptr; _len++;
-					}
-					if (_len & 1) *buffer++= 0;	// 16 bit aligned text strings.
-			}
-	}
-	va_end(l);
-
-	return buffer;
-}
 
 char *symbolToken(char *token_buffer, const char **ptr)
 {

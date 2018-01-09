@@ -31,8 +31,8 @@ struct symbol Symbol[]=
 {
 	{0xFF8E,">="},	// numbers 
 	{0xFF7A,"<="},	// numbers
-	{0xFF98,">="},
 	{0xFF84,"<="},
+	{0xFF98,">="},
 	{0xFF66,"<>"},
 	{0x005C,","},
 	{0x0064,";"},
@@ -102,7 +102,7 @@ char *symbolToken(char *token_buffer, const char **ptr)
 
 		if ( strncmp( *ptr, Symbol[n].symbol, l) == 0 )
 		{
-			printf("[%08X] ",  Symbol[n].token);
+			printf("[%04X] ",  Symbol[n].token);
 
 			*ptr = (((char *) *ptr) + l);
 			token_buffer = tokenWriter( token_buffer, "  2 ",  Symbol[n].token );
@@ -111,6 +111,29 @@ char *symbolToken(char *token_buffer, const char **ptr)
 	}
 	return NULL;
 }
+
+char *specialToken(char *token_buffer, const char **ptr)
+{
+	struct special *itm;
+	const char *s;
+	int l;
+
+	for (itm=Special;itm->name;itm++)
+	{
+		l = strlen(itm->name);
+
+		if ( strncasecmp( *ptr, itm->name, l) == 0 )
+		{
+			token_buffer = itm->fn( token_buffer, ptr );
+
+			*ptr = ((char *) (*ptr)+l);	// next;
+
+			return token_buffer;
+		}
+	}
+	return NULL;
+}
+
 
 
 char *_start_of_line_( char *token_buffer, char length, char level )
@@ -183,6 +206,9 @@ char *_number_( char *token_buffer, const char **ptr)
 	{
 		number = (number *10) + (*p - '0');
 	}
+
+	if (*ptr == p) return NULL;	// nothing found 
+
 	*ptr = p;
 
 	if (neg) number = -number;
@@ -248,6 +274,9 @@ char *_variable_( char *token_buffer, const char **ptr)
 	}
 
 	*d = 0;
+
+	if (*ptr == s) return NULL;	// string did not change so it can't be variale
+
 	*ptr = s;
 
 	printf("[%04X,%04X,%02X,%02X,%s%s] ", 0x0006, unknown, length + (length &1), flags, buffer, length &1 ? ",00" : "");
@@ -485,6 +514,8 @@ int main(int args, char **arg)
 			reformated_str = strdup( line.c_str() );
 			if (reformated_str) if (reformated_str[0] != 0)
 			{
+							char *ret = NULL;
+
 				level = reformat_string(reformated_str);
 				
 				ptr_token_buffer = _start_of_line_( ptr_token_buffer, 0, level + 1 );		// we don't know the length yet.
@@ -492,6 +523,7 @@ int main(int args, char **arg)
 				ptr = reformated_str;
 				do
 				{
+					ret = NULL;
 					token = find_token( &ptr );
 
 					if (token)
@@ -504,38 +536,53 @@ int main(int args, char **arg)
 						if (is_bin(ptr))
 						{
 							ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
+							ret = (char *) 1;
 						}
 						else if (is_hex(ptr))
 						{
 							ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
+							ret = (char *) 1;
 						}
 						else if (is_float(ptr))
 						{
 							ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
+							ret = (char *) 1;
 						}
 						else if (is_number(ptr))
 						{
-							ptr_token_buffer = _number_(ptr_token_buffer, &ptr );
+							ret = _number_(ptr_token_buffer, &ptr );
+							if (ret) ptr_token_buffer = ret;
 						}
-						else		// think this is variable
+						
+						if (!ret)
 						{
-							char *ret;
-
-							ret =symbolToken(ptr_token_buffer , &ptr);
-							if (ret)
+							if (!ret)
 							{
-
-
-								ptr_token_buffer = ret;	// symbol token found.
+								ret = symbolToken(ptr_token_buffer , &ptr);
+								if (ret) ptr_token_buffer = ret;
 							}
-							else
+
+							if (!ret)
 							{
+								ret = specialToken(ptr_token_buffer , &ptr);
+								if (ret) ptr_token_buffer = ret;	
+							}
 
+							if (!ret)
+							{
+								ret = _variable_(ptr_token_buffer, &ptr );
+								if (ret) ptr_token_buffer = ret;	
+							}
 
-								ptr_token_buffer = _variable_(ptr_token_buffer, &ptr );
+							if (!ret)
+							{
+								printf("**break - can't decode\n");
+								break;
 							}
 						}
-						Delay(10);
+
+//						printf("<< %08X, %08X >>\n", ptr, ret);
+						Delay(5);
 					}
 
 

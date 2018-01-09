@@ -25,6 +25,7 @@ struct special
 	char *(*fn) ( char *, const char **);
 };
 
+extern struct special Special[];
 
 #endif
 

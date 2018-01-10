@@ -238,6 +238,52 @@ char *_float_( char *token_buffer, const char **ptr)
 	return token_buffer;
 }
 
+char *_string_( char *token_buffer, const char **ptr)
+{
+	const char *s;
+	char *dest;
+	char *d;
+	int token;
+	unsigned short length = 0;
+
+	s=*ptr;
+
+	token = 0;
+
+	switch(*s)
+	{
+		case '"' : token = 0x0026; break;
+		case '\'': token = 0x002E; break;
+	}
+
+	length = 0;
+	for (s=(char *) (*ptr) + 1; (*s!='\'') && (*s!='"') && (*s) ;s++) length++;
+
+	if (*s==0) return NULL;
+
+	dest = (char *) malloc(length + 1);
+
+	if (dest)
+	{
+		int n = 0;
+
+		d = dest;
+		s=(char *) (*ptr) + 1;
+		for (n = 0; n < length ;n++) 	*d++=s[n];
+		*d = 0;
+
+		*ptr = (((char *) *ptr) + length + 2);
+
+		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, " 2, 2, s ",  token,  length , dest );
+
+		free(dest);
+	}
+
+	return token_buffer;
+};
+
+
 char *_variable_( char *token_buffer, const char **ptr)
 {
 	char buffer[1000];
@@ -533,7 +579,19 @@ int main(int args, char **arg)
 					}
 					else
 					{
-						if (is_bin(ptr))
+						if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
+						{
+							ret = _string_(ptr_token_buffer, &ptr );
+
+							if (ret == NULL)
+							{
+								printf("**break - string not terminated\n");
+								break;
+							}
+
+							ptr_token_buffer = ret;
+						}
+						else	if (is_bin(ptr))
 						{
 							ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
 							ret = (char *) 1;

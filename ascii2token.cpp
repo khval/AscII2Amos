@@ -305,6 +305,7 @@ char *_variable_( char *token_buffer, const char **ptr)
 	char *d;
 	BOOL _break = FALSE;
 
+	unsigned short token = 0x0006;
 	short unknown = 0;
 	char	length = 0;
 	char flags = 0;
@@ -328,6 +329,15 @@ char *_variable_( char *token_buffer, const char **ptr)
 					break;
 			case '$':	flags = 2; 
 					break;
+			case ':':	if (last_token == 0)
+					{
+						token = 0x000C;
+					}
+					else s--;
+
+					_break = TRUE;
+					break;
+
 			default: 
 				*d++=*s; length++;
 		}
@@ -339,9 +349,9 @@ char *_variable_( char *token_buffer, const char **ptr)
 
 	*ptr = s;
 
-	printf("[%04X,%04X,%02X,%02X,%s%s] ", 0x0006, unknown, length + (length &1), flags, buffer, length &1 ? ",00" : "");
+	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length + (length &1), flags, buffer, length &1 ? ",00" : "");
 
-	token_buffer = tokenWriter( token_buffer, 0x0006, "2, 1, 1, s" , unknown, length + (length &1), flags, buffer );
+	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length + (length &1), flags, buffer );
 
 	return token_buffer;
 };

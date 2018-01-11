@@ -244,22 +244,36 @@ char *_string_( char *token_buffer, const char **ptr)
 	char *dest;
 	char *d;
 	int token;
+	int numStartEndSymbols = 2;
 	unsigned short length = 0;
+	char firstSymbol;
 
 	s=*ptr;
 
 	token = 0;
 
-	switch(*s)
+	firstSymbol = *s;
+
+	switch(firstSymbol)
 	{
 		case '"' : token = 0x0026; break;
 		case '\'': token = 0x002E; break;
 	}
 
-	length = 0;
-	for (s=(char *) (*ptr) + 1; (*s!='\'') && (*s!='"') && (*s) ;s++) length++;
+	// check if string it terminated correct.
 
-	if (*s==0) return NULL;
+	length = 0;
+	for (s=(char *) (*ptr) + 1; ((*s!=firstSymbol) || (last_token == 0)) && (*s) ;s++) length++;
+
+	if (*s==0)	// string was unexpected terminated.
+	{
+		if ((last_token == 0) && (firstSymbol=='\''))	// if we are on new line, and ' symbol is used, then its not string but a rem.
+		{
+			token = 0x0652;
+			numStartEndSymbols = 1;
+		}
+		else 	 return NULL;
+	}
 
 	dest = (char *) malloc(length + 1);
 
@@ -272,7 +286,7 @@ char *_string_( char *token_buffer, const char **ptr)
 		for (n = 0; n < length ;n++) 	*d++=s[n];
 		*d = 0;
 
-		*ptr = (((char *) *ptr) + length + 2);
+		*ptr = (((char *) *ptr) + length + numStartEndSymbols);
 
 		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
 		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+int last_token = 0;
+
 #define my_va_ptr( list, type ) \
 	*(( type * ) buffer) = (type) va_arg( list, int ); \
 	buffer+=sizeof( type ); 
@@ -45,6 +47,8 @@ char *tokenWriter(char *buffer,unsigned short token , const char *fmt,   ... )
 			}
 	}
 	va_end(l);
+
+	last_token = token;
 
 	return buffer;
 }

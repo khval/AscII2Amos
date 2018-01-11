@@ -105,7 +105,7 @@ char *symbolToken(char *token_buffer, const char **ptr)
 			printf("[%04X] ",  Symbol[n].token);
 
 			*ptr = (((char *) *ptr) + l);
-			token_buffer = tokenWriter( token_buffer, "  2 ",  Symbol[n].token );
+			token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
 			return token_buffer;
 		}
 	}
@@ -140,7 +140,7 @@ char *_start_of_line_( char *token_buffer, char length, char level )
 {
 	printf("[%01X,%01X] ", length, level);
 
-	token_buffer = tokenWriter( token_buffer, "  1, 1 ",  length, level );
+	token_buffer = tokenArgWriter( token_buffer, "1,1",  length, level );
 	return token_buffer;
 }
 
@@ -148,7 +148,7 @@ char *_end_of_line_( char *token_buffer )
 {
 	printf("[%04X]", 0);
 
-	token_buffer = tokenWriter( token_buffer, " 2 ",  0x0000 );
+	token_buffer = tokenWriter( token_buffer, 0x0000, ""  );
 	return token_buffer;
 }
 
@@ -165,7 +165,7 @@ char *_bin_( char *token_buffer, const char **ptr)
 	*ptr = p;
 
 	printf("[%04X,%08X] ", 0x001E, number );
-	token_buffer = tokenWriter( token_buffer, " 2, 4 ", 0x001E ,  number );
+	token_buffer = tokenWriter( token_buffer, 0x001E, "4",  number );
 
 	return token_buffer;
 }
@@ -188,7 +188,7 @@ char *_hex_( char *token_buffer, const char **ptr)
 	*ptr = p;
 
 	printf("[%04X,%08X] ", 0x0036, number );
-	token_buffer = tokenWriter( token_buffer, " 2, 4 ", 0x0036 ,  number );
+	token_buffer = tokenWriter( token_buffer, 0x0036, "4",  number );
 
 	return token_buffer;
 }
@@ -214,7 +214,7 @@ char *_number_( char *token_buffer, const char **ptr)
 	if (neg) number = -number;
 
 	printf("[%04X,%08X] ", 0x003E, number );
-	token_buffer = tokenWriter( token_buffer, " 2, 4 ", 0x003E ,  number );
+	token_buffer = tokenWriter( token_buffer,  0x003E, "4", number );
 
 	return token_buffer;
 }
@@ -229,7 +229,7 @@ char *_float_( char *token_buffer, const char **ptr)
 	number = toAmosFloat( f );
 
 	printf("[%04X,%08X] ", 0x0046, number );
-	token_buffer = tokenWriter( token_buffer, " 2, 4 ", 0x0046 ,  number );
+	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
 
 	s = *ptr;
 	while ( (*s != ' ') && (*s != 0) && (*s) ) s++;
@@ -275,7 +275,7 @@ char *_string_( char *token_buffer, const char **ptr)
 		*ptr = (((char *) *ptr) + length + 2);
 
 		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, " 2, 2, s ",  token,  length , dest );
+		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );
 
 		free(dest);
 	}
@@ -327,7 +327,7 @@ char *_variable_( char *token_buffer, const char **ptr)
 
 	printf("[%04X,%04X,%02X,%02X,%s%s] ", 0x0006, unknown, length + (length &1), flags, buffer, length &1 ? ",00" : "");
 
-	token_buffer = tokenWriter( token_buffer, " 2, 2, 1, 1, s ",  0x0006, unknown, length + (length &1), flags, buffer );
+	token_buffer = tokenWriter( token_buffer, 0x0006, "2, 1, 1, s" , unknown, length + (length &1), flags, buffer );
 
 	return token_buffer;
 };
@@ -575,7 +575,7 @@ int main(int args, char **arg)
 					if (token)
 					{
 						printf("[%04X] ", token);
-						ptr_token_buffer = tokenWriter( ptr_token_buffer, " 2 ", token );
+						ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
 					}
 					else
 					{

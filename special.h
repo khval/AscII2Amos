@@ -2,6 +2,7 @@
 #ifndef special_h
 #define special_h
 
+char *cmdRem( char *token_buffer, const char **ptr);
 char *cmdExit( char *token_buffer, const char **ptr);
 char *cmdFor( char *token_buffer, const char **ptr);
 char *cmdRepeat( char *token_buffer, const char **ptr);

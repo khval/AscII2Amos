@@ -6,6 +6,7 @@
 
 struct special Special[]= 
 {
+	{"Rem",cmdRem},
 	{"On",cmdOn},
 	{"Else",cmdElse},
 	{"Data",cmdData},
@@ -25,6 +26,38 @@ struct special Special[]=
 	{"Do",cmdDo},
 	{NULL, NULL}
 };
+
+char *cmdRem( char *token_buffer, const char **ptr)
+{
+	unsigned short token = 0x064A;
+	const char *_start;
+	const char *p;
+	unsigned short length = 0;
+
+	_start = *ptr;
+
+	// rem\0
+
+	if (_start[3]==0)
+	{
+		*ptr = ((char *) *ptr) + 3;
+		return token_buffer;		
+	}
+
+	p =_start;
+
+	// rem{space}
+
+	 if (_start[3]==' ') p+=4;
+
+	for ( ;*p;p++) length++;
+
+	printf("[%04X,%04X,%s%s] ", token, length, _start+4, length &1 ? ",00" : "");
+	token_buffer = tokenWriter( token_buffer, token, "2,s",  length , _start+4 );
+
+	*ptr = ((char *) *ptr) + length + 1;
+	return token_buffer;
+}
 
 
 char *cmdExit( char *token_buffer, const char **ptr)

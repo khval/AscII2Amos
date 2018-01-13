@@ -556,144 +556,156 @@ void writeAMOS(char *buffer, int size)
 		fwrite( &_null, 4, 1, fd);
 		fclose(fd);
 	}
-
 }
+
+void encode_line(char *reformated_str, char	*ptr_token_buffer);
+
+void  interactiveAmosCommandLine()
+{
+	char *reformated_str;
+	char *ptr_token_buffer;
+	string line;
+
+	do
+	{
+		ptr_token_buffer = src_token_buffer;			// we calulate the size after line is converted.
+
+		printf("\nEnter AMOS command line:\n");
+		getline(cin, line);
+
+		reformated_str = strdup( line.c_str() );
+
+		if (reformated_str) if (reformated_str[0] != 0)
+		{
+			encode_line( reformated_str, ptr_token_buffer );
+
+			free(reformated_str);
+			reformated_str = NULL;
+
+			// length should be writen to start of line as a char, length is in x * short
+			*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
+
+			printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
+
+			writeAMOS( src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
+		}
+
+	} while ( line.length() != 0 );
+}
+
+
+void encode_line(char *reformated_str, char	*ptr_token_buffer)
+{
+	int level;
+	const char *ptr;
+	unsigned short token;
+	char *ret = NULL;
+
+	level = reformat_string(reformated_str);
+				
+	ptr_token_buffer = _start_of_line_( ptr_token_buffer, 0, level + 1 );		// we don't know the length yet.
+
+	ptr = reformated_str;
+	do
+	{
+		ret = NULL;
+		token = find_token( &ptr );
+
+		if (token)
+		{
+			printf("[%04X] ", token);
+			ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
+		}
+		else
+		{
+			if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
+			{
+				ret = _string_(ptr_token_buffer, &ptr );
+
+				if (ret == NULL)
+				{
+					printf("**break - string not terminated\n");
+					break;
+				}
+
+				ptr_token_buffer = ret;
+			}
+			else	if (is_bin(ptr))
+			{
+				ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
+				ret = (char *) 1;
+			}
+			else if (is_hex(ptr))
+			{
+				ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
+				ret = (char *) 1;
+			}
+			else if (is_float(ptr))
+			{
+				ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
+				ret = (char *) 1;
+			}
+			else if (is_number(ptr))
+			{
+				ret = _number_(ptr_token_buffer, &ptr );
+				if (ret) ptr_token_buffer = ret;
+			}
+						
+			if (!ret)
+			{
+				if (!ret)
+				{
+					ret = symbolToken(ptr_token_buffer , &ptr);
+					if (ret) ptr_token_buffer = ret;
+				}
+
+				if (!ret)
+				{
+					ret = specialToken(ptr_token_buffer , &ptr);
+					if (ret) ptr_token_buffer = ret;	
+				}
+
+				if (!ret)
+				{
+					ret = _variable_(ptr_token_buffer, &ptr );
+					if (ret) ptr_token_buffer = ret;	
+				}
+
+				if (!ret)
+				{
+					printf("**break - can't decode\n");
+					break;
+				}
+			}
+		}
+
+		if (*ptr==' ') ptr++;
+	} while ( *ptr );
+
+	ptr_token_buffer = _end_of_line_(ptr_token_buffer );
+}
+
 
 int main(int args, char **arg)
 {
-	string line;
+
 	int read;
-	int level;
 	struct cmd_line command_info;
 	const char *lptr;
 	const char *ptr, *next_ptr;
 	char *reformated_str;
 	char	*ptr_token_buffer;
 
-
 	if (init())
 	{
 		init_cmd_list();
 		order_by_cmd_length();
 		list_commands();
-		unsigned short token;
 
-		do
-		{
-			ptr_token_buffer = src_token_buffer;			// we calulate the size after line is converted.
-
-			printf("\nEnter AMOS command line:\n");
-			getline(cin, line);
-			
-			reformated_str = strdup( line.c_str() );
-			if (reformated_str) if (reformated_str[0] != 0)
-			{
-							char *ret = NULL;
-
-				level = reformat_string(reformated_str);
-				
-				ptr_token_buffer = _start_of_line_( ptr_token_buffer, 0, level + 1 );		// we don't know the length yet.
-
-				ptr = reformated_str;
-				do
-				{
-					ret = NULL;
-					token = find_token( &ptr );
-
-					if (token)
-					{
-						printf("[%04X] ", token);
-						ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
-					}
-					else
-					{
-						if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
-						{
-							ret = _string_(ptr_token_buffer, &ptr );
-
-							if (ret == NULL)
-							{
-								printf("**break - string not terminated\n");
-								break;
-							}
-
-							ptr_token_buffer = ret;
-						}
-						else	if (is_bin(ptr))
-						{
-							ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
-							ret = (char *) 1;
-						}
-						else if (is_hex(ptr))
-						{
-							ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
-							ret = (char *) 1;
-						}
-						else if (is_float(ptr))
-						{
-							ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
-							ret = (char *) 1;
-						}
-						else if (is_number(ptr))
-						{
-							ret = _number_(ptr_token_buffer, &ptr );
-							if (ret) ptr_token_buffer = ret;
-						}
-						
-						if (!ret)
-						{
-							if (!ret)
-							{
-								ret = symbolToken(ptr_token_buffer , &ptr);
-								if (ret) ptr_token_buffer = ret;
-							}
-
-							if (!ret)
-							{
-								ret = specialToken(ptr_token_buffer , &ptr);
-								if (ret) ptr_token_buffer = ret;	
-							}
-
-							if (!ret)
-							{
-								ret = _variable_(ptr_token_buffer, &ptr );
-								if (ret) ptr_token_buffer = ret;	
-							}
-
-							if (!ret)
-							{
-								printf("**break - can't decode\n");
-								break;
-							}
-						}
-
-//						printf("<< %08X, %08X >>\n", ptr, ret);
-						Delay(5);
-					}
-
-
-					if (*ptr==' ') ptr++;
-				} while ( *ptr );
-
-				ptr_token_buffer = _end_of_line_(ptr_token_buffer );
-
-
-				free(reformated_str);
-				reformated_str = NULL;
-
-				// length should be writen to start of line as a char, length is in x * short
-				*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
-
-				printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
-
-				writeAMOS( src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
-			}
-	
-		} while ( line.length() != 0 );
+		interactiveAmosCommandLine();
 
 		closedown();
 	}
 
 	return 0;
 }
-

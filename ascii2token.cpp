@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <iostream>
+#include <fstream>
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -537,28 +539,84 @@ int reformat_string(char *str)
 	return level;
 }
 
-void writeAMOS(char *buffer, int size)
+FILE *writeAMOSfileStart(const char *name)
 {
-	int _null = 0 ;
 	FILE *fd;
 
-	fd=fopen("amostest/ascii2amos.amos","w");
+	fd=fopen(name,"w");
 	if (fd)
 	{
 		char *id = (char *) "AMOS Basic v124 ";
 		fwrite( id, strlen(id), 1 , fd );
-		fwrite( &size, sizeof(int), 1,fd);
-		fwrite( buffer, size,1,fd);
-		fwrite( "AmBs", 4, 1, fd);
-		fwrite( &_null, 4, 1, fd);
-		fwrite( &_null, 4, 1, fd);
-		fwrite( &_null, 4, 1, fd);
-		fwrite( &_null, 4, 1, fd);
-		fclose(fd);
 	}
 }
 
-void encode_line(char *reformated_str, char	*ptr_token_buffer);
+void writeAMOSfileBuffet( FILE *fd, char *buffer, int size )
+{
+	fwrite( &size, sizeof(int), 1,fd);
+	fwrite( buffer, size,1,fd);
+}
+
+void writeAMOSfileEnd( FILE *fd)
+{
+	int _null = 0 ;
+
+	fwrite( "AmBs", 4, 1, fd);
+	fwrite( &_null, 4, 1, fd);
+	fwrite( &_null, 4, 1, fd);
+	fwrite( &_null, 4, 1, fd);
+	fwrite( &_null, 4, 1, fd);
+	fclose(fd);
+}
+
+void writeAMOSLineAsFile(const char *name,char *buffer, int size)
+{
+	int _null = 0 ;
+	FILE *fd;
+
+	fd=writeAMOSfileStart(name);
+	if (fd)
+	{
+		writeAMOSfileBuffet(fd,buffer,size);
+		writeAMOSfileEnd(fd);
+	}
+}
+
+char *encode_line(char *reformated_str, char	*ptr_token_buffer);
+
+
+void asciiAmosFile( const char *name )
+{
+	char *reformated_str;
+	char *ptr_token_buffer;
+	string line;
+	ifstream myfile( name );
+
+	if (myfile.is_open())
+	{
+		while ( getline( myfile, line) )
+		{
+			reformated_str = strdup( line.c_str() );
+
+			if (reformated_str) if (reformated_str[0] != 0)
+			{
+				ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
+
+				free(reformated_str);
+				reformated_str = NULL;
+
+				// length should be writen to start of line as a char, length is in x * short
+				*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
+
+				printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
+
+//				writeAMOS( src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
+			}
+		}
+		myfile.close();
+	}
+	else cout << "unable to open file";
+}
 
 void  interactiveAmosCommandLine()
 {
@@ -568,8 +626,6 @@ void  interactiveAmosCommandLine()
 
 	do
 	{
-		ptr_token_buffer = src_token_buffer;			// we calulate the size after line is converted.
-
 		printf("\nEnter AMOS command line:\n");
 		getline(cin, line);
 
@@ -577,7 +633,7 @@ void  interactiveAmosCommandLine()
 
 		if (reformated_str) if (reformated_str[0] != 0)
 		{
-			encode_line( reformated_str, ptr_token_buffer );
+			ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
 
 			free(reformated_str);
 			reformated_str = NULL;
@@ -587,14 +643,14 @@ void  interactiveAmosCommandLine()
 
 			printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
 
-			writeAMOS( src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
+			writeAMOSLineAsFile( "amostest/ascii2amos.amos", src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 		}
 
 	} while ( line.length() != 0 );
 }
 
 
-void encode_line(char *reformated_str, char	*ptr_token_buffer)
+char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 {
 	int level;
 	const char *ptr;
@@ -683,6 +739,8 @@ void encode_line(char *reformated_str, char	*ptr_token_buffer)
 	} while ( *ptr );
 
 	ptr_token_buffer = _end_of_line_(ptr_token_buffer );
+
+	return ptr_token_buffer;
 }
 
 

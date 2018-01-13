@@ -160,8 +160,8 @@ char *cmdUntil( char *token_buffer, const char **ptr)
 
 char *cmdThen( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x02C6, 0 );
-	token_buffer = tokenWriter( token_buffer, 0x02C6, "2");
+	printf("[%04X] ", 0x02C6 );
+	token_buffer = tokenWriter( token_buffer, 0x02C6, "");
 	return token_buffer;
 }
 

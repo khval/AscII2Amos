@@ -116,6 +116,7 @@ char *specialToken(char *token_buffer, const char **ptr)
 {
 	struct special *itm;
 	const char *s;
+	char c;
 	int l;
 
 	for (itm=Special;itm->name;itm++)
@@ -124,11 +125,14 @@ char *specialToken(char *token_buffer, const char **ptr)
 
 		if ( strncasecmp( *ptr, itm->name, l) == 0 )
 		{
-			token_buffer = itm->fn( token_buffer, ptr );
+			c = ((char *) (*ptr)) [ strlen(itm ->name) ];
 
-			*ptr = ((char *) (*ptr)+l);	// next;
-
-			return token_buffer;
+			if ((c==' ')||(c=='(')||(c==0))		// command needs to terminated correct to be vaild.
+			{
+				token_buffer = itm->fn( token_buffer, ptr );
+				*ptr = ((char *) (*ptr)+l);	// next;
+				return token_buffer;
+			}
 		}
 	}
 	return NULL;

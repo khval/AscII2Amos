@@ -12,6 +12,7 @@
 #include "what_is.h"
 #include "support_functions.h"
 #include "special.h"
+#include "datatypes.h"
 
 #include <iostream>
 #include <string>
@@ -51,47 +52,6 @@ struct symbol Symbol[]=
 	{0xFFAC,"<"},
 	{0xFFF6,"^"}
 };
-
-
-int toAmosFloat(double v)
-{
-	int n;
-	int number1 = 0;
-	int data = 0;
-	int e =0;
-	bool s = (v<0.0f) ;
-	double u;
-
-	if (s) v=-v;
-
-	while (v>2) {e++; v/=2.0f; };
-	while (v<1) {e--; v*=2.0f; };
-
-	for (n=23;n>-1;n--)
-	{
-		u = 1.0f / (double) (1<<(23-n));
-	
-		if (v>u)
-		{
-			number1 |= (1<<n);
-			v -= u;
-		}
-	}
-
-	if (e>0) 
-	{
-		e++;
-	}
-	else if (e<0)
-	{
-		e++;
-	}
-
-	data = number1 << 8 | (s ? 0x80 : 0x00) | (e & 0x7F);
-
-	return data;
-}
-
 
 char *symbolToken(char *token_buffer, const char **ptr)
 {
@@ -140,8 +100,6 @@ char *specialToken(char *token_buffer, const char **ptr)
 	return NULL;
 }
 
-
-
 char *_start_of_line_( char *token_buffer, char length, char level )
 {
 	printf("[%01X,%01X] ", length, level);
@@ -157,152 +115,6 @@ char *_end_of_line_( char *token_buffer )
 	token_buffer = tokenWriter( token_buffer, 0x0000, ""  );
 	return token_buffer;
 }
-
-char *_bin_( char *token_buffer, const char **ptr)
-{
-	int number = 0;
-	const char *p = *ptr;
-
-	if (*p=='%') p++;
-	for (;is_break_char(*p)==FALSE; p++)
-	{
-		number = (number << 1 ) + (*p-'0');
-	}
-	*ptr = p;
-
-	printf("[%04X,%08X] ", 0x001E, number );
-	token_buffer = tokenWriter( token_buffer, 0x001E, "4",  number );
-
-	return token_buffer;
-}
-
-char *_hex_( char *token_buffer, const char **ptr)
-{
-	int number = 0;
-	int n=0;
-	const char *p = *ptr;
-
-	if (*p=='$') p++;
-
-	for (;is_break_char(*p)==FALSE; p++)
-	{
-		if ((*p>='0')&&(*p<='9')) n = *p - '0';
-		if ((*p>='a')&&(*p<='f')) n = *p -'a' + 10;
-		if ((*p>='A')&&(*p<='F')) n = *p -'A' + 10;
-		number = (number << 4 ) + n;
-	}
-	*ptr = p;
-
-	printf("[%04X,%08X] ", 0x0036, number );
-	token_buffer = tokenWriter( token_buffer, 0x0036, "4",  number );
-
-	return token_buffer;
-}
-
-char *_number_( char *token_buffer, const char **ptr)
-{
-	BOOL neg = FALSE;
-	int number = 0;
-	int n;
-	const char *p = *ptr;
-
-	if (*p=='-') { neg = TRUE; p++; }
-
-	for (;is_break_char(*p)==FALSE; p++)
-	{
-		number = (number *10) + (*p - '0');
-	}
-
-	if (*ptr == p) return NULL;	// nothing found 
-
-	*ptr = p;
-
-	if (neg) number = -number;
-
-	printf("[%04X,%08X] ", 0x003E, number );
-	token_buffer = tokenWriter( token_buffer,  0x003E, "4", number );
-
-	return token_buffer;
-}
-
-char *_float_( char *token_buffer, const char **ptr)
-{
-	int number = 0;
-	double f;
-	const char *s;
-
-	sscanf(*ptr, "%lf", &f );
-	number = toAmosFloat( f );
-
-	printf("[%04X,%08X] ", 0x0046, number );
-	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
-
-	s = *ptr;
-	while ( (*s != ' ') && (*s != 0) && (*s) ) s++;
-	*ptr = s;
-
-	return token_buffer;
-}
-
-char *_string_( char *token_buffer, const char **ptr)
-{
-	const char *s;
-	char *dest;
-	char *d;
-	int token;
-	int numStartEndSymbols = 2;
-	unsigned short length = 0;
-	char firstSymbol;
-
-	s=*ptr;
-
-	token = 0;
-
-	firstSymbol = *s;
-
-	switch(firstSymbol)
-	{
-		case '"' : token = 0x0026; break;
-		case '\'': token = 0x002E; break;
-	}
-
-	// check if string it terminated correct.
-
-	length = 0;
-	for (s=(char *) (*ptr) + 1; ((*s!=firstSymbol) || (last_token == 0)) && (*s) ;s++) length++;
-
-	if (*s==0)	// string was unexpected terminated.
-	{
-		if ((last_token == 0) && (firstSymbol=='\''))	// if we are on new line, and ' symbol is used, then its not string but a rem.
-		{
-			token = 0x0652;
-			numStartEndSymbols = 1;
-		}
-		else 	 return NULL;
-	}
-
-	dest = (char *) malloc(length + 1);
-
-	if (dest)
-	{
-		int n = 0;
-
-		d = dest;
-		s=(char *) (*ptr) + 1;
-		for (n = 0; n < length ;n++) 	*d++=s[n];
-		*d = 0;
-
-		*ptr = (((char *) *ptr) + length + numStartEndSymbols);
-
-		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );
-
-		free(dest);
-	}
-
-	return token_buffer;
-};
-
 
 char *_variable_( char *token_buffer, const char **ptr)
 {
@@ -355,9 +167,9 @@ char *_variable_( char *token_buffer, const char **ptr)
 
 	*ptr = s;
 
-	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length, flags, buffer, length &1 ? ",00" : "");
+	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), flags, buffer, length &1 ? ",00" : "");
 
-	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length + (length&1 ? 1:0), flags, buffer );
+	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), flags, buffer );
 
 	return token_buffer;
 };
@@ -553,13 +365,13 @@ FILE *writeAMOSFileStart(const char *name)
 	return fd;
 }
 
-void writeAMOSFileBuffer( FILE *fd, char *buffer, int size )
+void writeAMOSFileBuffer( FILE *fd, char *buffer, int bufferSize, int blockSize )
 {
 	fseek(fd, 0x10, SEEK_SET);		// overwrite the size
-	fwrite( &size, sizeof(int), 1,fd);
+	fwrite( &blockSize, sizeof(int), 1, fd);
 
 	fseek(fd, 0, SEEK_END);			// apped buffer to end of file
-	fwrite( buffer, size,1,fd);
+	fwrite( buffer, bufferSize,1,fd);
 }
 
 void writeAMOSFileEnd( FILE *fd)
@@ -582,7 +394,7 @@ void writeAMOSLineAsFile(const char *name,char *buffer, int size)
 	fd=writeAMOSFileStart(name);
 	if (fd)
 	{
-		writeAMOSFileBuffer(fd,buffer,size);
+		writeAMOSFileBuffer(fd,buffer,size,size);
 		writeAMOSFileEnd(fd);
 	}
 }
@@ -590,17 +402,19 @@ void writeAMOSLineAsFile(const char *name,char *buffer, int size)
 char *encode_line(char *reformated_str, char	*ptr_token_buffer);
 
 
-void asciiAmosFile( const char *name )
+void asciiAmosFile( const char *name, const char *outputfile )
 {
 	char *reformated_str;
 	char *ptr_token_buffer;
 	string line;
 	ifstream myfile( name );
 	FILE *fd;
+	unsigned int bufferSize = 0;
+	unsigned int tokenBlockSize = 0;
 
 	if (myfile.is_open())
 	{
-		fd = writeAMOSFileStart("amostest/ascii2amos.amos");
+		fd = writeAMOSFileStart( outputfile );
 
 		while ( getline( myfile, line) )
 		{
@@ -608,17 +422,24 @@ void asciiAmosFile( const char *name )
 
 			if (reformated_str) if (reformated_str[0] != 0)
 			{
+				printf("%s\n",reformated_str);
+
 				ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
 
 				free(reformated_str);
 				reformated_str = NULL;
 
 				// length should be writen to start of line as a char, length is in x * short
-				*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
 
-				printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
+				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
+
+				src_token_buffer[0] = (char) (bufferSize / 2) ;
+
+				printf("\n");
+
+				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
 					
-				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
+				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
 		}
 
@@ -773,7 +594,9 @@ int main(int args, char **arg)
 		order_by_cmd_length();
 		list_commands();
 
-		interactiveAmosCommandLine();
+		asciiAmosFile( "amos.ascii" , "amostest/ascii2amos.amos" );
+
+//		interactiveAmosCommandLine();
 
 		closedown();
 	}

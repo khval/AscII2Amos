@@ -355,9 +355,9 @@ char *_variable_( char *token_buffer, const char **ptr)
 
 	*ptr = s;
 
-	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length + (length &1), flags, buffer, length &1 ? ",00" : "");
+	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length, flags, buffer, length &1 ? ",00" : "");
 
-	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length + (length &1), flags, buffer );
+	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length + (length&1 ? 1:0), flags, buffer );
 
 	return token_buffer;
 };
@@ -539,7 +539,7 @@ int reformat_string(char *str)
 	return level;
 }
 
-FILE *writeAMOSfileStart(const char *name)
+FILE *writeAMOSFileStart(const char *name)
 {
 	FILE *fd;
 
@@ -549,15 +549,20 @@ FILE *writeAMOSfileStart(const char *name)
 		char *id = (char *) "AMOS Basic v124 ";
 		fwrite( id, strlen(id), 1 , fd );
 	}
+
+	return fd;
 }
 
-void writeAMOSfileBuffet( FILE *fd, char *buffer, int size )
+void writeAMOSFileBuffer( FILE *fd, char *buffer, int size )
 {
+	fseek(fd, 0x10, SEEK_SET);		// overwrite the size
 	fwrite( &size, sizeof(int), 1,fd);
+
+	fseek(fd, 0, SEEK_END);			// apped buffer to end of file
 	fwrite( buffer, size,1,fd);
 }
 
-void writeAMOSfileEnd( FILE *fd)
+void writeAMOSFileEnd( FILE *fd)
 {
 	int _null = 0 ;
 
@@ -574,11 +579,11 @@ void writeAMOSLineAsFile(const char *name,char *buffer, int size)
 	int _null = 0 ;
 	FILE *fd;
 
-	fd=writeAMOSfileStart(name);
+	fd=writeAMOSFileStart(name);
 	if (fd)
 	{
-		writeAMOSfileBuffet(fd,buffer,size);
-		writeAMOSfileEnd(fd);
+		writeAMOSFileBuffer(fd,buffer,size);
+		writeAMOSFileEnd(fd);
 	}
 }
 
@@ -591,9 +596,12 @@ void asciiAmosFile( const char *name )
 	char *ptr_token_buffer;
 	string line;
 	ifstream myfile( name );
+	FILE *fd;
 
 	if (myfile.is_open())
 	{
+		fd = writeAMOSFileStart("amostest/ascii2amos.amos");
+
 		while ( getline( myfile, line) )
 		{
 			reformated_str = strdup( line.c_str() );
@@ -609,10 +617,13 @@ void asciiAmosFile( const char *name )
 				*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
 
 				printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
-
-//				writeAMOS( src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
+					
+				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 			}
 		}
+
+		if (fd) writeAMOSFileEnd(fd);
+
 		myfile.close();
 	}
 	else cout << "unable to open file";
@@ -642,6 +653,8 @@ void  interactiveAmosCommandLine()
 			*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
 
 			printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
+
+			printf("%08x - %08x\n", src_token_buffer, ptr_token_buffer);
 
 			writeAMOSLineAsFile( "amostest/ascii2amos.amos", src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 		}

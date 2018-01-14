@@ -13,7 +13,7 @@ VERSION = 1
 warnings = -wall -Wuninitialized
 
 
-main_objects = init.cpp what_is.cpp  support_functions.cpp special.cpp datatypes.cpp
+main_objects = init.cpp what_is.cpp  support_functions.cpp special.cpp datatypes.cpp dynamicCommands.cpp
 main_SRCS = ascii2token.cpp
 
 objects = $(main_objects:.cpp=.o)

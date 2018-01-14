@@ -15,6 +15,8 @@
 #include "special.h"
 #include "datatypes.h"
 #include "dynamicCommands.h"
+#include "load_interpreter_config.h"
+#include "argflags.h"
 
 #include <iostream>
 #include <string>
@@ -23,8 +25,11 @@ using namespace std;
 
 // For this test we only have one command..
 
+ULONG flags = 0;
+char *filename = NULL;
 
 char src_token_buffer[1000];
+struct extension *extensions[extensions_max];
 
 struct symbol 
 {
@@ -212,35 +217,24 @@ void order_by_cmd_length()
 {
 	int i;
 	DynamicCommand *tmp;
+	BOOL sorted;
 
-	for (i = 0 ; i<DCommands.size() - 1; i++ )
+	// sort until nothing more to sort, not unlike bobble sort but not so stupid.
+	do
 	{
-		if (DCommands[i]->len < DCommands[i+1]->len)
+		sorted = FALSE;
+
+		for (i = 0 ; i<DCommands.size() - 1; i++ )
 		{
-			tmp = DCommands[i];
-			DCommands[i] = DCommands[i+1];
-			DCommands[i+1] = tmp;
+			if (DCommands[i]->len < DCommands[i+1]->len)
+			{
+				tmp = DCommands[i];
+				DCommands[i] = DCommands[i+1];
+				DCommands[i+1] = tmp;
+			}
 		}
-	}
+	} while (sorted);
 }
-
-/*
-BOOL is_command(char *input, int args, BOOL has_return_value)
-{
-	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct cmd_line);
-
-	for (n=0; n<cmd_count; n++)
-	{
-		if (strncasecmp( input, cmds[n].name, cmds[n].len ) == 0 )
-		{
-			return TRUE;
-		}
-	}	
-
-	return FALSE;
-}
-*/
 
 unsigned short find_token(const char **input )
 {
@@ -513,73 +507,74 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	do
 	{
 		ret = NULL;
-		token = find_token( &ptr );
-
-		if (token)
+	
+		if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
 		{
-			printf("[%04X] ", token);
-			ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
+			ret = _string_(ptr_token_buffer, &ptr );
+
+			if (ret == NULL)
+			{
+				printf("**break - string not terminated\n");
+				break;
+			}
+
+			ptr_token_buffer = ret;
 		}
-		else
+		else	if (is_bin(ptr))
 		{
-			if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
-			{
-				ret = _string_(ptr_token_buffer, &ptr );
-
-				if (ret == NULL)
-				{
-					printf("**break - string not terminated\n");
-					break;
-				}
-
-				ptr_token_buffer = ret;
-			}
-			else	if (is_bin(ptr))
-			{
-				ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
-				ret = (char *) 1;
-			}
-			else if (is_hex(ptr))
-			{
-				ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
-				ret = (char *) 1;
-			}
-			else if (is_float(ptr))
-			{
-				ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
-				ret = (char *) 1;
-			}
-			else if (is_number(ptr))
-			{
-				ret = _number_(ptr_token_buffer, &ptr );
-				if (ret) ptr_token_buffer = ret;
-			}
-						
+			ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
+			ret = (char *) 1;
+		}
+		else if (is_hex(ptr))
+		{
+			ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
+			ret = (char *) 1;
+		}
+		else if (is_float(ptr))
+		{
+			ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
+			ret = (char *) 1;
+		}
+		else if (is_number(ptr))
+		{
+			ret = _number_(ptr_token_buffer, &ptr );
+			if (ret) ptr_token_buffer = ret;
+		}
+					
+		if (!ret)
+		{
 			if (!ret)
 			{
-				if (!ret)
-				{
-					ret = symbolToken(ptr_token_buffer , &ptr);
-					if (ret) ptr_token_buffer = ret;
-				}
+				ret = symbolToken(ptr_token_buffer , &ptr);
+				if (ret) ptr_token_buffer = ret;
+			}
 
-				if (!ret)
-				{
-					ret = specialToken(ptr_token_buffer , &ptr);
-					if (ret) ptr_token_buffer = ret;	
-				}
+			if (!ret)
+			{
+				ret = specialToken(ptr_token_buffer , &ptr);
+				if (ret) ptr_token_buffer = ret;	
+			}
 
-				if (!ret)
+			if (!ret)
+			{
+				token = find_token( &ptr );
+				if (token)
 				{
-					ret = _variable_(ptr_token_buffer, &ptr );
-					if (ret) ptr_token_buffer = ret;	
+					printf("[%04X] ", token);
+					ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
 				}
+			}
 
-				if (!ret)
-				{
-					printf("**break - can't decode\n");
-					break;
-				}
+			if (!ret)
+			{
+				ret = _variable_(ptr_token_buffer, &ptr );
+				if (ret) ptr_token_buffer = ret;	
+			}
+
+			if (!ret)
+			{
+				printf("**break - can't decode\n");
+				break;
 			}
 		}
 
@@ -591,6 +586,43 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	return ptr_token_buffer;
 }
 
+
+void init_extensions()
+{
+	int n;
+	for (n=0;n<STMX;n++) ST_str[n]=NULL;
+	for (n=0;n<extensions_max;n++) extensions[n]=NULL;
+}
+
+
+void load_extensions()
+{
+	char buffer[1000];
+	BOOL config_loaded = load_config_try_paths( filename );
+	int n;
+
+	for (n=14;n<14+extensions_max;n++)
+	{
+		if (ST_str[n]) if (ST_str[n][0]) 
+		{
+			sprintf(buffer,"AmosPro:APSystem/%s",ST_str[n]);
+			extensions[n-14] = OpenExtension(buffer);
+
+			if ((flags & flag_ShowExtensions) || (flags & flag_verbose))
+			{
+				printf("%02d: %s is%s loaded.\n",n -14, ST_str[n], extensions[n-14] ? "" : " NOT" );
+			}
+		}
+	}
+}
+
+void free_extensions()
+{
+	int n;
+
+	for (n=0;n<STMX;n++) { if (ST_str[n]) free(ST_str[n]); ST_str[n] = NULL;}
+	for (n=0;n<extensions_max;n++) if (extensions[n]) CloseExtension(extensions[n]);
+}
 
 int main(int args, char **arg)
 {

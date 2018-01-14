@@ -2,13 +2,15 @@
 # Version to build
 VERSION = 1
 
-#CC     = $(CROSS_COMPILE)g++ 
+CC     = $(CROSS_COMPILE)g++ 
 #CXX    = $(CROSS_COMPILE)c++ 
 #AS     = $(CROSS_COMPILE)as 
 #LD     = $(CROSS_COMPILE)ld 
 #RANLIB = $(CROSS_COMPILE)ranlib 
 #RM     = delete
 # RM     = rm
+
+opt = -Iinclude
 
 warnings = -wall -Wuninitialized
 
@@ -20,10 +22,10 @@ objects = $(main_objects:.cpp=.o)
 programs= $(main_SRCS:.cpp=.exe)
 
 %.o:		%.cpp 
-	g++ $(warnings) -c -O2 -D__USE_INLINE__ $(@:.o=.cpp) -o $@
+	$(CC) $(opt) $(warnings) -c -O2 -D__USE_INLINE__ $(@:.o=.cpp) -o $@
 
 %.exe:		%.cpp $(objects)
-	g++ $(warnings) -O2 -D__USE_INLINE__ $(@:.exe=.cpp) $(objects) -o $@
+	$(CC) $(opt) $(warnings) -O2 -D__USE_INLINE__ $(@:.exe=.cpp) $(objects) -o $@
 
 all:	 $(programs) $(objects)
 

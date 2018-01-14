@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 #include <proto/exec.h>
 #include <proto/dos.h>
@@ -13,6 +14,7 @@
 #include "support_functions.h"
 #include "special.h"
 #include "datatypes.h"
+#include "dynamicCommands.h"
 
 #include <iostream>
 #include <string>
@@ -174,53 +176,55 @@ char *_variable_( char *token_buffer, const char **ptr)
 	return token_buffer;
 };
 
-struct cmd_line
+struct templateCommands
 {
 	unsigned short token;
 	const char *name;
-	int len;
+	int args;
 	int comma;
 	BOOL return_value;
 };
 
-struct cmd_line cmds[] = {
+struct templateCommands cmds[] = {
 	{0x0C6E,"Screen",0,1,FALSE},
 	{0x09EA,"Screen Open",0,4,FALSE},
 	{0x0054,":",0,0,FALSE}
 };
 
+
+vector<DynamicCommand *> DCommands;
+
 void init_cmd_list()
 {
 	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct cmd_line);
-
-	struct cmd_line tmp;
+	int cmd_count = sizeof(cmds) / sizeof(struct templateCommands);
+	DynamicCommand *_new;
 
 	for (n=0; n<cmd_count; n++)
 	{
-		cmds[n].len = strlen(cmds[n].name);
+		_new = new DynamicCommand( cmds[n].token,  (char *) cmds[n].name,cmds[n].args, cmds[n].return_value);
+		if (_new)	DCommands.push_back(_new);
 	}
 }
 
 
 void order_by_cmd_length()
 {
-	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct cmd_line);
+	int i;
+	DynamicCommand *tmp;
 
-	struct cmd_line tmp;
-
-	for (n=0; n<cmd_count-1; n++)
+	for (i = 0 ; i<DCommands.size() - 1; i++ )
 	{
-		if (cmds[n].len < cmds[n+1].len)	
+		if (DCommands[i]->len < DCommands[i+1]->len)
 		{
-			tmp = cmds[n];
-			cmds[n] = cmds[n+1];
-			cmds[n+1] = tmp;
+			tmp = DCommands[i];
+			DCommands[i] = DCommands[i+1];
+			DCommands[i+1] = tmp;
 		}
 	}
 }
 
+/*
 BOOL is_command(char *input, int args, BOOL has_return_value)
 {
 	int n;
@@ -236,19 +240,24 @@ BOOL is_command(char *input, int args, BOOL has_return_value)
 
 	return FALSE;
 }
+*/
 
 unsigned short find_token(const char **input )
 {
-	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct cmd_line);
+	int i;
+	char c;
 
-	for (n=0; n<cmd_count; n++)
+	for (i = 0 ; i<DCommands.size() - 1; i++ )
 	{
-		if (strncasecmp( *input, cmds[n].name, cmds[n].len ) == 0 )
+		if (strncasecmp( *input, DCommands[i]->name, DCommands[i]->len ) == 0 )
 		{
-			*input += cmds[n].len;
+			c = ((char *) *input ) [ DCommands[i] -> len ];
 
-			return cmds[n].token;
+			if ((c==0)||(c=='(')||(c==' '))		// the correct terminated command name in a prompt.
+			{
+				*input += DCommands[i] -> len;
+				return DCommands[i] -> token;
+			}
 		}
 	}	
 	return 0;
@@ -256,18 +265,22 @@ unsigned short find_token(const char **input )
 
 void list_commands()
 {
-	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct cmd_line);
+	int i;
 
-	for (n=0; n<cmd_count; n++)
+	printf("-- start of command list --\n\n");
+
+	for (i = 0 ; i<DCommands.size() - 1; i++ )
 	{
-		printf("[%s]\n",cmds[n].name);
+		printf("[%s]\n",DCommands[i] -> name);
 	}	
+
+	printf("-- end of command list --\n\n");
 }
 
 
 // return break point, to next command.
 
+/*
 const char *get_info( const char *str, cmd_line &out )
 {
 	BOOL is_string = FALSE;
@@ -321,6 +334,7 @@ const char *get_info( const char *str, cmd_line &out )
 	printf("parentheses %d,out.comma %d\n", parentheses,out.comma);
 	return ptr;
 }
+*/
 
 int reformat_string(char *str)
 {
@@ -582,7 +596,6 @@ int main(int args, char **arg)
 {
 
 	int read;
-	struct cmd_line command_info;
 	const char *lptr;
 	const char *ptr, *next_ptr;
 	char *reformated_str;

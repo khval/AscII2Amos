@@ -143,8 +143,8 @@ char *_string_( char *token_buffer, const char **ptr)
 
 		*ptr = (((char *) *ptr) + length + numStartEndSymbols);
 
-		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );
+		printf("[%04X,%04X,%s%s] ", token, length+ (length&1), dest, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1) , dest );
 
 		free(dest);
 	}

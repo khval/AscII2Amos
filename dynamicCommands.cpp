@@ -5,9 +5,10 @@
 
 #include "dynamicCommands.h"
 
-DynamicCommand::DynamicCommand(unsigned short _token, char *_name,int args,BOOL return_value)
+DynamicCommand::DynamicCommand(unsigned short _token, unsigned short _extension, char *_name,int args,BOOL return_value)
 {
 	token = _token;
+	extension = _extension;
 
 	if (_name)
 	{

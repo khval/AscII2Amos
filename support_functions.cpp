@@ -90,3 +90,29 @@ char *tokenArgWriter(char *buffer, const char *fmt,   ... )
 
 	return buffer;
 }
+
+void Capitalize(char *str)
+{
+	int n;
+	char c,lc;
+	int upper = 'A'-'a';
+
+	for (n=0;str[n];n++)
+	{
+		c = str[n];
+
+		if (n==0)
+		{
+			str[n] = ((c>='a')  && (c <= 'z')) ? c+upper : c;
+		}
+		else if (n>0)
+		{
+			lc = str[n-1];
+
+			if ((lc==' ')||(lc=='!'))
+			{
+				str[n] = ((c>='a')  && (c <= 'z')) ? c+upper : c;
+			}
+		}
+	}
+}

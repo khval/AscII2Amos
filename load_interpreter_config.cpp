@@ -84,7 +84,7 @@ BOOL load_config( const char *name )
 char *get_path(char *name)
 {
 	char *path;
-	int nlen = strlen(name);
+	int nlen = name ? strlen(name) : 0;
 	int n;
 
 	for (n=nlen-1; n>0; n--)

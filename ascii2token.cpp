@@ -107,6 +107,13 @@ char *specialToken(char *token_buffer, const char **ptr)
 	return NULL;
 }
 
+char *extensionToken(char *token_buffer, int token, int table )
+{
+	printf("[%04X,%02X,%02X,%04X] ",0x004E , table, 0, token );
+	token_buffer = tokenWriter( token_buffer, 0x004E, "1,1,2", table,0, token );
+	return token_buffer;
+}
+
 char *_start_of_line_( char *token_buffer, char length, char level )
 {
 	printf("[%01X,%01X] ", length, level);
@@ -207,7 +214,7 @@ void init_cmd_list()
 
 	for (n=0; n<cmd_count; n++)
 	{
-		_new = new DynamicCommand( cmds[n].token,  (char *) cmds[n].name,cmds[n].args, cmds[n].return_value);
+		_new = new DynamicCommand( cmds[n].token, 0, (char *) cmds[n].name,cmds[n].args, cmds[n].return_value);
 		if (_new)	DCommands.push_back(_new);
 	}
 }
@@ -236,8 +243,15 @@ void order_by_cmd_length()
 	} while (sorted);
 }
 
-unsigned short find_token(const char **input )
+struct find_token_return 
 {
+	unsigned short token;
+	unsigned short extension;
+};
+
+struct find_token_return find_token(const char **input )
+{
+	struct find_token_return ret;
 	int i;
 	char c;
 
@@ -250,11 +264,18 @@ unsigned short find_token(const char **input )
 			if ((c==0)||(c=='(')||(c==' '))		// the correct terminated command name in a prompt.
 			{
 				*input += DCommands[i] -> len;
-				return DCommands[i] -> token;
+
+				ret.token = DCommands[i] -> token;
+				ret.extension = DCommands[i] -> extension;
+
+				return ret;
 			}
 		}
 	}	
-	return 0;
+
+	ret.token = 0;
+	ret.extension = 0;
+	return ret;
 }
 
 void list_commands()
@@ -557,11 +578,20 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 
 			if (!ret)
 			{
-				token = find_token( &ptr );
-				if (token)
+				struct find_token_return info = find_token( &ptr );
+				if (info.token)
 				{
-					printf("[%04X] ", token);
-					ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, token, "" );
+					if (info.extension == 0)
+					{
+						printf("[%04X] ", info.token);
+						ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info.token, "" );
+					}
+					else
+					{
+
+						ret = ptr_token_buffer = extensionToken( ptr_token_buffer,  info.token, info.extension );
+						ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info.token, "" );
+					}
 				}
 			}
 
@@ -601,6 +631,8 @@ void load_extensions()
 	BOOL config_loaded = load_config_try_paths( filename );
 	int n;
 
+	printf("%s\n", config_loaded ? "condig loaded" : "config not loaded\n");
+
 	for (n=14;n<14+extensions_max;n++)
 	{
 		if (ST_str[n]) if (ST_str[n][0]) 
@@ -624,6 +656,36 @@ void free_extensions()
 	for (n=0;n<extensions_max;n++) if (extensions[n]) CloseExtension(extensions[n]);
 }
 
+void extensions_dump()
+{
+	char name_str[200];
+	struct ExtensionDescriptor *ed;
+	int nn,n;
+	DynamicCommand *_new;
+	
+	for (n=0;n<extensions_max-14;n++)
+	{
+		if (extensions[n])
+		{
+			for ( ed = FirstExtensionItem( extensions[n] ); ed ; ed = NextExtensionItem( ed ))
+			{
+				if (ed -> tokenInfo.command)
+				{
+					sprintf(name_str,"%s", 
+						(char *) (ed -> tokenInfo.command[0] == '!' ?  ed -> tokenInfo.command + 1 : ed -> tokenInfo.command ) );
+
+					Capitalize(name_str);
+
+					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 0, FALSE);
+
+					if (_new)	DCommands.push_back(_new);
+				}
+			}
+		}
+	}
+}
+
+
 int main(int args, char **arg)
 {
 
@@ -633,11 +695,19 @@ int main(int args, char **arg)
 	char *reformated_str;
 	char	*ptr_token_buffer;
 
+	flags = flag_verbose;
+
 	if (init())
 	{
 		init_cmd_list();
+
+		init_extensions();
+		load_extensions();
+		extensions_dump();
+		free_extensions();
+
 		order_by_cmd_length();
-		list_commands();
+//		list_commands();
 
 		asciiAmosFile( "amos.ascii" , "amostest/ascii2amos.amos" );
 

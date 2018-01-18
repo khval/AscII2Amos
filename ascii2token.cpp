@@ -94,6 +94,8 @@ char *specialToken(char *token_buffer, const char **ptr)
 	{
 		l = strlen(itm->name);
 
+		printf("*%s*\n", itm -> name);
+
 		if ( strncasecmp( *ptr, itm->name, l) == 0 )
 		{
 			c = ((char *) (*ptr)) [ strlen(itm ->name) ];
@@ -354,7 +356,7 @@ int reformat_string(char *str)
 	int level = 0;
 
 	dest = str;
-	while (*str==' ') { str++; level++; }
+	while ((*str==' ')||(*str=='\t')) { str++; level+= *str==' ' ? 1 : 3 ; }	// if line starts with tabs or spaces, AMOS don't use tabs
 
 	for (ptr=str;*ptr;ptr++)
 	{
@@ -366,6 +368,7 @@ int reformat_string(char *str)
 		}
 		else
 		{
+			if (*ptr == '\t') *ptr = ' ';		// tabs are not legal outside of strings
 			if ((lc != ' ')||(*ptr != ' ')) *dest++=*ptr;
 		}
 		lc = *ptr;
@@ -570,7 +573,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 				if (ret) ptr_token_buffer = ret;	
 			}
 
-			if (!ret)
+			if (!ret)	//  its not a special command, and its not symbolToken.
 			{
 				struct find_token_return info = find_token( &ptr );
 				if (info.token)

@@ -17,6 +17,7 @@
 #include "dynamicCommands.h"
 #include "load_interpreter_config.h"
 #include "argflags.h"
+#include "native.h"
 
 #include <iostream>
 #include <string>
@@ -44,6 +45,7 @@ struct symbol Symbol[]=
 	{0xFF84,"<="},
 	{0xFF98,">="},
 	{0xFF66,"<>"},
+	{0x0054,":"},
 	{0x005C,","},
 	{0x0064,";"},
 	{0x0074,"("},
@@ -152,6 +154,10 @@ char *_variable_( char *token_buffer, const char **ptr)
 			case '+':
 			case '-':
 			case '/':
+			case '[':
+			case ']':
+			case '(':
+			case ')':
 			case '*':
 					s--;	// this are not part of the variable name
 					_break = TRUE;
@@ -188,33 +194,21 @@ char *_variable_( char *token_buffer, const char **ptr)
 	return token_buffer;
 };
 
-struct templateCommands
-{
-	unsigned short token;
-	const char *name;
-	int args;
-	int comma;
-	BOOL return_value;
-};
-
-struct templateCommands cmds[] = {
-	{0x0C6E,"Screen",0,1,FALSE},
-	{0x09EA,"Screen Open",0,4,FALSE},
-	{0x0054,":",0,0,FALSE}
-};
 
 
 vector<DynamicCommand *> DCommands;
 
 void init_cmd_list()
 {
-	int n;
-	int cmd_count = sizeof(cmds) / sizeof(struct templateCommands);
 	DynamicCommand *_new;
+	BOOL return_value = FALSE;
+	int args = 0;
 
-	for (n=0; n<cmd_count; n++)
+	for (struct native *item=nativeList; item -> name; item++)
 	{
-		_new = new DynamicCommand( cmds[n].token, 0, (char *) cmds[n].name,cmds[n].args, cmds[n].return_value);
+		printf("[%s]\n", item -> name);
+
+		_new = new DynamicCommand( item -> token, 0, (char *) item -> name, args, return_value);
 		if (_new)	DCommands.push_back(_new);
 	}
 }
@@ -588,9 +582,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 					}
 					else
 					{
-
 						ret = ptr_token_buffer = extensionToken( ptr_token_buffer,  info.token, info.extension );
-						ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info.token, "" );
 					}
 				}
 			}

@@ -1,4 +1,8 @@
 
-amos pri
-range
+drugs$["cool"]
+
+procedure drugs$[rock$]
+	print "my first test amos program is "; rock$
+end proc
+
 

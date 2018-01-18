@@ -16,7 +16,7 @@ struct special Special[]=
 	{"Equ",cmdEqu},
 	{"Lvo",cmdLvo},
 //	{"Struc",cmdStruc},
-//	{"Procedure",cmdProcedure},
+	{"Procedure",cmdProcedure},
 //	{"Proc",cmdProc},
 	{"For",cmdFor},
 	{"Repeat",cmdRepeat},
@@ -78,6 +78,15 @@ char *cmdRepeat( char *token_buffer, const char **ptr)
 {
 	printf("[%04X, %04X] ", 0x0250, 0 );
 	token_buffer = tokenWriter( token_buffer,0x0250, "2",0);
+	return token_buffer;
+}
+
+char *cmdProcedure( char *token_buffer, const char **ptr)
+{
+	int flags = 0;
+
+	printf("[%04X, %04X] ", 0x0376, 0 );
+	token_buffer = tokenWriter( token_buffer,0x0376,"4,2,1,1",0,0,flags,0);
 	return token_buffer;
 }
 

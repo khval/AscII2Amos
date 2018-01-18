@@ -19,6 +19,7 @@ char *cmdLvo( char *token_buffer, const char **ptr);
 char *cmdUntil( char *token_buffer, const char **ptr);
 char *cmdUntil( char *token_buffer, const char **ptr);
 char *cmdThen( char *token_buffer, const char **ptr);
+char *cmdProcedure( char *token_buffer, const char **ptr);
 
 struct special
 {

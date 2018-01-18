@@ -15,7 +15,14 @@ opt = -Iinclude
 warnings = -wall -Wuninitialized
 
 
-main_objects = init.cpp what_is.cpp  support_functions.cpp special.cpp datatypes.cpp dynamicCommands.cpp load_interpreter_config.cpp
+main_objects = init.cpp what_is.cpp  \
+		support_functions.cpp \
+		special.cpp \
+		datatypes.cpp \
+		dynamicCommands.cpp \
+		load_interpreter_config.cpp	\
+		native.cpp
+
 main_SRCS = ascii2token.cpp
 
 objects = $(main_objects:.cpp=.o)

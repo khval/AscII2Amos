@@ -1,0 +1,3 @@
+amos2ascii.exe --show-tokens work:pro_2017/Amos2AscII/AMOS-tests/ascii2amos.amos
+amos2ascii.exe --show-tokens work:pro_2017/Amos2AscII/AMOS-tests/Notascii2amos.amos
+

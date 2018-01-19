@@ -208,7 +208,7 @@ void init_cmd_list()
 
 	for (struct native *item=nativeList; item -> name; item++)
 	{
-		printf("[%s]\n", item -> name);
+//		printf("[%s]\n", item -> name);
 
 		_new = new DynamicCommand( item -> token, 0, (char *) item -> name, args, return_value);
 		if (_new)	DCommands.push_back(_new);
@@ -291,61 +291,6 @@ void list_commands()
 
 // return break point, to next command.
 
-/*
-const char *get_info( const char *str, cmd_line &out )
-{
-	BOOL is_string = FALSE;
-	BOOL has_ascii = FALSE;
-	int equal_symbol = FALSE;
-	int parentheses = 0;
-	const char *ptr;
-
-	out.return_value = FALSE;
-	out.comma = 0;
-
-	for (ptr = str; *ptr; ptr++)
-	{
-		if (is_string == FALSE)
-		{
-			switch (*ptr)
-			{
-				case '=':	if (has_ascii == TRUE)
-						{
-							printf("parentheses %d,comma %d\n", parentheses,out.comma);
-							return ptr;
-						}
-						else
-						{
-							printf("command starts with '='");
-							parentheses = -1;
-						}
-						break;
-
-				case '(':	parentheses++;	break;
-				case ')':	parentheses--;		break;
-				case ':':	if (is_string == FALSE) 
-				
-					printf("parentheses %d,comma %d\n", parentheses,out.comma);
-
-					return ptr+1;	
-					break;
-
-				case ',':	if (parentheses == 0) out.comma++; break;
-
-				case ' ':	break; // ignore spaces.
-
-				default:	has_ascii = TRUE;
-						printf("*\n");
-			}
-		}
-
-		if (*ptr=='"')	is_string = !is_string;	// swap is string or not
-	}
-
-	printf("parentheses %d,out.comma %d\n", parentheses,out.comma);
-	return ptr;
-}
-*/
 
 int reformat_string(char *str)
 {
@@ -666,7 +611,7 @@ void free_extensions()
 	for (n=0;n<extensions_max;n++) if (extensions[n]) CloseExtension(extensions[n]);
 }
 
-void extensions_dump()
+void extensions_init()
 {
 	char name_str[200];
 	struct ExtensionDescriptor *ed;
@@ -695,6 +640,18 @@ void extensions_dump()
 	}
 }
 
+void free_commands()
+{
+	DynamicCommand *_item;
+
+	while (!DCommands.empty())
+	{
+		_item = DCommands.front();
+		if (_item) delete _item;
+		DCommands.erase(DCommands.begin());
+	}
+}
+
 
 int main(int args, char **arg)
 {
@@ -713,15 +670,20 @@ int main(int args, char **arg)
 
 		init_extensions();
 		load_extensions();
-//		extensions_dump();
+		extensions_init();
 		free_extensions();
-
 		order_by_cmd_length();
-//		list_commands();
 
-		asciiAmosFile( "amos.ascii" , "amostest/ascii2amos.amos" );
+		if (args==1)
+		{
+			interactiveAmosCommandLine();
+		}
+		else
+		{
+			asciiAmosFile( arg[1] , "amostest/ascii2amos.amos" );
+		}
 
-//		interactiveAmosCommandLine();
+		free_commands();
 
 		closedown();
 	}

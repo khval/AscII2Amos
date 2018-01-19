@@ -94,7 +94,7 @@ char *specialToken(char *token_buffer, const char **ptr)
 	{
 		l = strlen(itm->name);
 
-		printf("*%s*\n", itm -> name);
+//		printf("*%s*\n", itm -> name);
 
 		if ( strncasecmp( *ptr, itm->name, l) == 0 )
 		{
@@ -467,6 +467,21 @@ void asciiAmosFile( const char *name, const char *outputfile )
 					
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
+			else 
+			{
+
+				ptr_token_buffer = _start_of_line_( src_token_buffer, 0, 1 );
+				ptr_token_buffer = _end_of_line_( ptr_token_buffer );
+
+				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
+				src_token_buffer[0] = (char) (bufferSize / 2) ;
+
+				printf("\n");
+
+				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
+
+				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
+			}
 		}
 
 		if (fd) writeAMOSFileEnd(fd);
@@ -698,7 +713,7 @@ int main(int args, char **arg)
 
 		init_extensions();
 		load_extensions();
-		extensions_dump();
+//		extensions_dump();
 		free_extensions();
 
 		order_by_cmd_length();

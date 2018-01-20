@@ -4,11 +4,19 @@
 #include <string.h>
 #include <string>
 #include <math.h>
+#include <vector>
 #include <proto/exec.h>
+#include <proto/amosextension.h>
+
+#include "support_functions.h"
 #include "load_interpreter_config.h"
 #include "argflags.h"
+#include "dynamicCommands.h"
+
+using namespace std;
 
 extern ULONG flags;
+extern vector<DynamicCommand *> DCommands;
 
 #define cmpID( a, b ) (*((int *) a) == *((int *) ((void *) b)))
 #define Leek( adr )	*((int *) (adr))
@@ -145,7 +153,7 @@ BOOL try_config( const char *path, char *config_name)
 	return config_loaded;
 }
 
-BOOL load_config_try_paths( char *filename)
+BOOL load_config_try_paths( const char *filename)
 {
 	BOOL config_loaded = FALSE;
 	const char **path;
@@ -158,7 +166,7 @@ BOOL load_config_try_paths( char *filename)
 			NULL,
 		};
 
-	_path = get_path( filename );
+	_path = get_path( (char *) filename );
 	if (_path)
 	{
 		config_loaded = try_config( _path,  (char *) config_name);
@@ -174,3 +182,75 @@ BOOL load_config_try_paths( char *filename)
 
 	return config_loaded;
 }
+
+
+
+
+void load_extensions( const char *filename )
+{
+	char buffer[1000];
+	BOOL config_loaded = load_config_try_paths( filename );
+	int n;
+
+	printf("%s\n", config_loaded ? "condig loaded" : "config not loaded\n");
+
+	for (n=14;n<14+extensions_max;n++)
+	{
+		if (ST_str[n]) if (ST_str[n][0]) 
+		{
+			sprintf(buffer,"AmosPro:APSystem/%s",ST_str[n]);
+			extensions[n-14] = OpenExtension(buffer);
+
+			if ((flags & flag_ShowExtensions) || (flags & flag_verbose))
+			{
+				printf("%02d: %s is%s loaded.\n",n -14, ST_str[n], extensions[n-14] ? "" : " NOT" );
+			}
+		}
+	}
+}
+
+void free_extensions()
+{
+	int n;
+
+	for (n=0;n<STMX;n++) { if (ST_str[n]) free(ST_str[n]); ST_str[n] = NULL;}
+	for (n=0;n<extensions_max;n++) if (extensions[n]) CloseExtension(extensions[n]);
+}
+
+void init_extensions()
+{
+	int n;
+	for (n=0;n<STMX;n++) ST_str[n]=NULL;
+	for (n=0;n<extensions_max;n++) extensions[n]=NULL;
+}
+
+
+void extensions_to_commands()
+{
+	char name_str[200];
+	struct ExtensionDescriptor *ed;
+	int nn,n;
+	DynamicCommand *_new;
+	
+	for (n=0;n<extensions_max-14;n++)
+	{
+		if (extensions[n])
+		{
+			for ( ed = FirstExtensionItem( extensions[n] ); ed ; ed = NextExtensionItem( ed ))
+			{
+				if (ed -> tokenInfo.command)
+				{
+					sprintf(name_str,"%s", 
+						(char *) (ed -> tokenInfo.command[0] == '!' ?  ed -> tokenInfo.command + 1 : ed -> tokenInfo.command ) );
+
+					Capitalize(name_str);
+
+					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 0, FALSE);
+
+					if (_new)	DCommands.push_back(_new);
+				}
+			}
+		}
+	}
+}
+

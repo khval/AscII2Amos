@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include <stdarg.h>
 #include <iostream>
 #include <fstream>
@@ -18,9 +19,10 @@
 #include "load_interpreter_config.h"
 #include "argflags.h"
 #include "native.h"
+#include "saveAmos.h"
 
 #include <iostream>
-#include <string>
+
 
 using namespace std;
 
@@ -32,56 +34,7 @@ char *filename = NULL;
 char src_token_buffer[1000];
 struct extension *extensions[extensions_max];
 
-struct symbol 
-{
-	unsigned short token;
-	const char *symbol;
-};
-
-struct symbol Symbol[]=
-{
-	{0xFF8E,">="},	// numbers 
-	{0xFF7A,"<="},	// numbers
-	{0xFF84,"<="},
-	{0xFF98,">="},
-	{0xFF66,"<>"},
-	{0x0054,":"},
-	{0x005C,","},
-	{0x0064,";"},
-	{0x0074,"("},
-	{0x007C,")"},
-	{0x0084,"["},
-	{0x008C,"]"},
-	{0xFFC0,"+"},
-	{0xFFCA,"-"},
-	{0xFFA2,"="},
-	{0xFFE2,"*"},
-	{0xFFEC,"/"},
-	{0xFFB6,">"},
-	{0xFFAC,"<"},
-	{0xFFF6,"^"}
-};
-
-char *symbolToken(char *token_buffer, const char **ptr)
-{
-	int n;
-	int l;
-
-	for (n=0;n<sizeof(Symbol)/sizeof(struct symbol );n++)
-	{
-		l = strlen(Symbol[n].symbol);
-
-		if ( strncmp( *ptr, Symbol[n].symbol, l) == 0 )
-		{
-			printf("[%04X] ",  Symbol[n].token);
-
-			*ptr = (((char *) *ptr) + l);
-			token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
-			return token_buffer;
-		}
-	}
-	return NULL;
-}
+extern char *symbolToken(char *token_buffer, const char **ptr);
 
 char *specialToken(char *token_buffer, const char **ptr)
 {
@@ -322,53 +275,6 @@ int reformat_string(char *str)
 	return level;
 }
 
-FILE *writeAMOSFileStart(const char *name)
-{
-	FILE *fd;
-
-	fd=fopen(name,"w");
-	if (fd)
-	{
-		char *id = (char *) "AMOS Basic v124 ";
-		fwrite( id, strlen(id), 1 , fd );
-	}
-
-	return fd;
-}
-
-void writeAMOSFileBuffer( FILE *fd, char *buffer, int bufferSize, int blockSize )
-{
-	fseek(fd, 0x10, SEEK_SET);		// overwrite the size
-	fwrite( &blockSize, sizeof(int), 1, fd);
-
-	fseek(fd, 0, SEEK_END);			// apped buffer to end of file
-	fwrite( buffer, bufferSize,1,fd);
-}
-
-void writeAMOSFileEnd( FILE *fd)
-{
-	int _null = 0 ;
-
-	fwrite( "AmBs", 4, 1, fd);
-	fwrite( &_null, 4, 1, fd);
-	fwrite( &_null, 4, 1, fd);
-	fwrite( &_null, 4, 1, fd);
-	fwrite( &_null, 4, 1, fd);
-	fclose(fd);
-}
-
-void writeAMOSLineAsFile(const char *name,char *buffer, int size)
-{
-	int _null = 0 ;
-	FILE *fd;
-
-	fd=writeAMOSFileStart(name);
-	if (fd)
-	{
-		writeAMOSFileBuffer(fd,buffer,size,size);
-		writeAMOSFileEnd(fd);
-	}
-}
 
 char *encode_line(char *reformated_str, char	*ptr_token_buffer);
 
@@ -572,74 +478,6 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 }
 
 
-void init_extensions()
-{
-	int n;
-	for (n=0;n<STMX;n++) ST_str[n]=NULL;
-	for (n=0;n<extensions_max;n++) extensions[n]=NULL;
-}
-
-
-void load_extensions()
-{
-	char buffer[1000];
-	BOOL config_loaded = load_config_try_paths( filename );
-	int n;
-
-	printf("%s\n", config_loaded ? "condig loaded" : "config not loaded\n");
-
-	for (n=14;n<14+extensions_max;n++)
-	{
-		if (ST_str[n]) if (ST_str[n][0]) 
-		{
-			sprintf(buffer,"AmosPro:APSystem/%s",ST_str[n]);
-			extensions[n-14] = OpenExtension(buffer);
-
-			if ((flags & flag_ShowExtensions) || (flags & flag_verbose))
-			{
-				printf("%02d: %s is%s loaded.\n",n -14, ST_str[n], extensions[n-14] ? "" : " NOT" );
-			}
-		}
-	}
-}
-
-void free_extensions()
-{
-	int n;
-
-	for (n=0;n<STMX;n++) { if (ST_str[n]) free(ST_str[n]); ST_str[n] = NULL;}
-	for (n=0;n<extensions_max;n++) if (extensions[n]) CloseExtension(extensions[n]);
-}
-
-void extensions_init()
-{
-	char name_str[200];
-	struct ExtensionDescriptor *ed;
-	int nn,n;
-	DynamicCommand *_new;
-	
-	for (n=0;n<extensions_max-14;n++)
-	{
-		if (extensions[n])
-		{
-			for ( ed = FirstExtensionItem( extensions[n] ); ed ; ed = NextExtensionItem( ed ))
-			{
-				if (ed -> tokenInfo.command)
-				{
-					sprintf(name_str,"%s", 
-						(char *) (ed -> tokenInfo.command[0] == '!' ?  ed -> tokenInfo.command + 1 : ed -> tokenInfo.command ) );
-
-					Capitalize(name_str);
-
-					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 0, FALSE);
-
-					if (_new)	DCommands.push_back(_new);
-				}
-			}
-		}
-	}
-}
-
 void free_commands()
 {
 	DynamicCommand *_item;
@@ -651,7 +489,6 @@ void free_commands()
 		DCommands.erase(DCommands.begin());
 	}
 }
-
 
 int main(int args, char **arg)
 {
@@ -668,9 +505,11 @@ int main(int args, char **arg)
 	{
 		init_cmd_list();
 
+		if (args>1) filename = arg[1];
+
 		init_extensions();
-		load_extensions();
-		extensions_init();
+		load_extensions( filename);
+		extensions_to_commands();
 		free_extensions();
 		order_by_cmd_length();
 

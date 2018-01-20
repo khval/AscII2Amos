@@ -21,7 +21,9 @@ main_objects = init.cpp what_is.cpp  \
 		datatypes.cpp \
 		dynamicCommands.cpp \
 		load_interpreter_config.cpp	\
-		native.cpp
+		native.cpp \
+		symbols.cpp \
+		SaveAmos.cpp
 
 main_SRCS = ascii2token.cpp
 

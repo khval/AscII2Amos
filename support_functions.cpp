@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <proto/exec.h>
 
 int last_token = 0;
 
@@ -115,4 +116,47 @@ void Capitalize(char *str)
 			}
 		}
 	}
+}
+
+//	- First character:
+//		The first character defines the TYPE on instruction:
+//			I--> instruction
+//			0--> function that returns a integer
+//			1--> function that returns a float
+//			2--> function that returns a string
+//			V--> reserved variable. In that case, you must
+//				state the type int-float-string
+//	- If your instruction does not need parameters, then you stop
+//	- Your instruction needs parameters, now comes the param list
+//			Type,TypetType,Type...
+//		Type of the parameter (0 1 2)
+//		Comma or "t" for TO
+
+BOOL return_value(const char *args)
+{
+	char rc;
+	rc = args ? args[0] : 0;
+	return ((rc>='0') && (rc<='2')) ? TRUE : FALSE;
+}
+
+int number_of_args(const char *aptr)
+{
+	char rc;
+	int args = 0;
+
+	if (aptr == NULL) return 0;
+	if (aptr[0] == 0) return 0;
+
+	aptr++; // skip return type.
+	rc = *aptr;	
+
+	while (rc != 0)
+	{
+		args += ((rc>='0') && (rc<='2')) ? 1 : 0;
+		aptr++;	// next
+		rc = *aptr;
+		printf("%d\n", rc);
+	}
+
+	return args;
 }

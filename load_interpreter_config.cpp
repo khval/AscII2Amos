@@ -225,6 +225,7 @@ void init_extensions()
 }
 
 
+
 void extensions_to_commands()
 {
 	char name_str[200];
@@ -245,7 +246,12 @@ void extensions_to_commands()
 
 					Capitalize(name_str);
 
-					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 0, FALSE);
+//					printf("%s\n", ed -> tokenInfo.args ? ed -> tokenInfo.args : "None");
+//					printf("%d\n", number_of_args(ed -> tokenInfo.args));
+
+					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 
+							number_of_args( ed -> tokenInfo.args ),
+							return_value(ed -> tokenInfo.args));
 
 					if (_new)	DCommands.push_back(_new);
 				}

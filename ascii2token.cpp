@@ -156,14 +156,15 @@ vector<DynamicCommand *> DCommands;
 void init_cmd_list()
 {
 	DynamicCommand *_new;
-	BOOL return_value = FALSE;
-	int args = 0;
 
 	for (struct native *item=nativeList; item -> name; item++)
 	{
 //		printf("[%s]\n", item -> name);
 
-		_new = new DynamicCommand( item -> token, 0, (char *) item -> name, args, return_value);
+		_new = new DynamicCommand( item -> token, 0, (char *) item -> name, 
+			number_of_args( item -> args ),
+			return_value( item -> args));
+
 		if (_new)	DCommands.push_back(_new);
 	}
 }
@@ -212,6 +213,11 @@ struct find_token_return find_token(const char **input )
 
 			if ((c==0)||(c=='(')||(c==' '))		// the correct terminated command name in a prompt.
 			{
+				// so we found a command with right name, but does have correct number paramiters?
+
+				printf("%s %s - %d\n", DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
+
+
 				*input += DCommands[i] -> len;
 
 				ret.token = DCommands[i] -> token;

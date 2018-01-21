@@ -1,0 +1,3 @@
+amos2ascii.exe --show-tokens work:pro_2017/Amos2AscII/AMOS-tests/ascii2amos.amos >RAM:dump1.txt
+amos2ascii.exe --show-tokens Menu_Editor.AMOS >RAM:dump2.txt
+

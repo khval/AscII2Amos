@@ -36,6 +36,15 @@ struct extension *extensions[extensions_max];
 
 extern char *symbolToken(char *token_buffer, const char **ptr);
 
+void print_arg(char *arg)
+{
+	for ( ; ((*arg != ':') && (*arg != 0)) ; arg++)
+	{
+		printf("%c",*arg);
+	}
+	printf("\n");
+}
+
 char *specialToken(char *token_buffer, const char **ptr)
 {
 	struct special *itm;
@@ -199,11 +208,52 @@ struct find_token_return
 	unsigned short extension;
 };
 
+
+// parentheses shoud be -1, if command shoud have return value
+
+int get_parmeters_count( const char *str , int parentheses)
+{
+	BOOL is_string_double = FALSE;
+	BOOL is_string_single = FALSE;
+	BOOL has_ascii = FALSE;
+	const char *ptr;
+	int comma = 0;
+
+	for (ptr = str; *ptr; ptr++)
+	{
+		if (((is_string_double)||(is_string_single)) == FALSE)
+		{
+			switch (*ptr)
+			{
+				case '(':	parentheses++;	break;
+				case ')':	parentheses--;		break;
+
+				case ':':	
+						return (comma>0) ? (comma+1) : (has_ascii ? 1 : 0)  ;
+						// exit end of this command.
+
+				case ',':	if (parentheses == 0) comma++; break;
+
+				case '\t':
+				case ' ':	break; // ignore spaces and tabs.
+
+				default:	if (parentheses==0) has_ascii = TRUE;
+			}
+		}
+
+		if ( (*ptr=='"') && (is_string_single == FALSE) )	is_string_double = !is_string_double;
+		if ( (*ptr=='\'') && (is_string_double == FALSE) )	is_string_single = !is_string_single;	
+	}
+
+	return (comma>0) ? (comma+1) : (has_ascii ? 1 : 0) ;
+}
+
 struct find_token_return find_token(const char **input )
 {
 	struct find_token_return ret;
 	int i;
 	char c;
+	int pc;
 
 	for (i = 0 ; i<DCommands.size() - 1; i++ )
 	{
@@ -215,15 +265,22 @@ struct find_token_return find_token(const char **input )
 			{
 				// so we found a command with right name, but does have correct number paramiters?
 
-				printf("%s %s - %d\n", DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
+				pc = get_parmeters_count( ((char *) (*input)) + DCommands[i]->len,  DCommands[i] -> return_value ? -1 : 0 );
 
+				printf("Token %04X: %s %s Args %d\n", DCommands[i] -> token, DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
+				printf("get_parmeters_count = %d\n", pc );
 
-				*input += DCommands[i] -> len;
+				if ( DCommands[i] -> args == pc )
+				{
+					print_arg( ((char *) (*input)) + DCommands[i]->len );
 
-				ret.token = DCommands[i] -> token;
-				ret.extension = DCommands[i] -> extension;
+					*input += DCommands[i] -> len;
 
-				return ret;
+					ret.token = DCommands[i] -> token;
+					ret.extension = DCommands[i] -> extension;
+
+					return ret;
+				}
 			}
 		}
 	}	
@@ -306,37 +363,26 @@ void asciiAmosFile( const char *name, const char *outputfile )
 			if (reformated_str) if (reformated_str[0] != 0)
 			{
 				printf("%s\n",reformated_str);
-
 				ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
 
 				free(reformated_str);
 				reformated_str = NULL;
 
 				// length should be writen to start of line as a char, length is in x * short
-
 				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
-
 				src_token_buffer[0] = (char) (bufferSize / 2) ;
-
 				printf("\n");
-
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
-					
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
 			else 
 			{
-
 				ptr_token_buffer = _start_of_line_( src_token_buffer, 0, 1 );
 				ptr_token_buffer = _end_of_line_( ptr_token_buffer );
-
 				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
 				src_token_buffer[0] = (char) (bufferSize / 2) ;
-
 				printf("\n");
-
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
-
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
 		}
@@ -370,10 +416,6 @@ void  interactiveAmosCommandLine()
 
 			// length should be writen to start of line as a char, length is in x * short
 			*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
-
-			printf("\n\nsize: %d\n", ptr_token_buffer - src_token_buffer);
-
-			printf("%08x - %08x\n", src_token_buffer, ptr_token_buffer);
 
 			writeAMOSLineAsFile( "amostest/ascii2amos.amos", src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 		}
@@ -509,14 +551,20 @@ int main(int args, char **arg)
 
 	if (init())
 	{
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		init_cmd_list();
-
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		if (args>1) filename = arg[1];
 
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		init_extensions();
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		load_extensions( filename);
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		extensions_to_commands();
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		free_extensions();
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		order_by_cmd_length();
 
 		if (args==1)

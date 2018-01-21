@@ -155,7 +155,6 @@ int number_of_args(const char *aptr)
 		args += ((rc>='0') && (rc<='2')) ? 1 : 0;
 		aptr++;	// next
 		rc = *aptr;
-		printf("%d\n", rc);
 	}
 
 	return args;

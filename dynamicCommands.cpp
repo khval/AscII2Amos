@@ -13,11 +13,6 @@ DynamicCommand::DynamicCommand(unsigned short _token, unsigned short _extension,
 	args = _args;
 	return_value = _return_value;
 
-	printf("%s%s,%d",
-		return_value  ? "=" : "",
-		_name,
-		args);
-
 	if (_name)
 	{
 		name = strdup(_name);

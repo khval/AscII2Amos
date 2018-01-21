@@ -239,15 +239,13 @@ void extensions_to_commands()
 		{
 			for ( ed = FirstExtensionItem( extensions[n] ); ed ; ed = NextExtensionItem( ed ))
 			{
+
 				if (ed -> tokenInfo.command)
 				{
 					sprintf(name_str,"%s", 
 						(char *) (ed -> tokenInfo.command[0] == '!' ?  ed -> tokenInfo.command + 1 : ed -> tokenInfo.command ) );
 
 					Capitalize(name_str);
-
-//					printf("%s\n", ed -> tokenInfo.args ? ed -> tokenInfo.args : "None");
-//					printf("%d\n", number_of_args(ed -> tokenInfo.args));
 
 					_new = new DynamicCommand( ed -> tokenInfo.token, n,  name_str, 
 							number_of_args( ed -> tokenInfo.args ),

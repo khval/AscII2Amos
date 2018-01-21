@@ -122,14 +122,17 @@ char *_variable_( char *token_buffer, const char **ptr)
 			case ']':
 			case '(':
 			case ')':
+			case ',':
 			case '*':
 					s--;	// this are not part of the variable name
 					_break = TRUE;
 					break;
 
 			case '#':	flags = 1;	
+					_break = TRUE;
 					break;
 			case '$':	flags = 2; 
+					_break = TRUE;
 					break;
 			case ':':	if (last_token == 0)
 					{
@@ -179,7 +182,9 @@ void init_cmd_list()
 }
 
 
-void order_by_cmd_length()
+// when we look for commands we looks for command with longest names and most arguments first
+
+void order_by_cmd_length_and_args()
 {
 	int i;
 	DynamicCommand *tmp;
@@ -192,7 +197,7 @@ void order_by_cmd_length()
 
 		for (i = 0 ; i<DCommands.size() - 1; i++ )
 		{
-			if (DCommands[i]->len < DCommands[i+1]->len)
+			if ((DCommands[i]->len < DCommands[i+1]->len) || ( DCommands[i]->args < DCommands[i+1]->args))
 			{
 				tmp = DCommands[i];
 				DCommands[i] = DCommands[i+1];
@@ -237,7 +242,7 @@ int get_parmeters_count( const char *str , int parentheses)
 				case '\t':
 				case ' ':	break; // ignore spaces and tabs.
 
-				default:	if (parentheses==0) has_ascii = TRUE;
+				default:	has_ascii = TRUE;
 			}
 		}
 
@@ -265,12 +270,16 @@ struct find_token_return find_token(const char **input )
 			{
 				// so we found a command with right name, but does have correct number paramiters?
 
-				pc = get_parmeters_count( ((char *) (*input)) + DCommands[i]->len,  DCommands[i] -> return_value ? -1 : 0 );
+				if ( DCommands[i] -> args > 0)
+				{
+					pc = get_parmeters_count( ((char *) (*input)) + DCommands[i]->len,  DCommands[i] -> return_value ? -1 : 0 );
 
-				printf("Token %04X: %s %s Args %d\n", DCommands[i] -> token, DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
-				printf("get_parmeters_count = %d\n", pc );
+					printf("Token %04X: %s %s Args %d\n", DCommands[i] -> token, DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
+					printf("get_parmeters_count = %d\n", pc );
+				}
+				else pc = 0;
 
-				if ( DCommands[i] -> args == pc )
+				if ( DCommands[i] -> args == pc ) 
 				{
 					print_arg( ((char *) (*input)) + DCommands[i]->len );
 
@@ -551,21 +560,14 @@ int main(int args, char **arg)
 
 	if (init())
 	{
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		init_cmd_list();
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		if (args>1) filename = arg[1];
 
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		init_extensions();
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		load_extensions( filename);
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		extensions_to_commands();
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
 		free_extensions();
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
-		order_by_cmd_length();
+		order_by_cmd_length_and_args();
 
 		if (args==1)
 		{

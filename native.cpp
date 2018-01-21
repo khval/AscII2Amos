@@ -228,7 +228,7 @@ struct native nativeList[]={
 		{0x0C48,"Y Screen","00,0",1,974},
 		{0x0C52,"X Text","00",1,976},
 		{0x0C60,"Y Text","00",1,977},
-		{0x0C6E,"Screen","I0}a0",864,1},
+		{0x0C6E,"Screen","I0",864,1},
 		{0x0C84,"Hires","0",1,867},
 		{0x0C90,"Lowres","0",1,868},
 		{0x0C9C,"Dual Playfield","I0,0",844,1},

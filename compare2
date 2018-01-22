@@ -1,3 +1,7 @@
 amos2ascii.exe --show-tokens work:pro_2017/Amos2AscII/AMOS-tests/ascii2amos.amos >RAM:dump1.txt
-amos2ascii.exe --show-tokens Menu_Editor.AMOS >RAM:dump2.txt
 
+if not exists ram:dump2.txt
+amos2ascii.exe --show-tokens Menu_Editor.AMOS >RAM:dump2.txt
+endif
+
+diff  -C 3 ram:dump1.txt ram:dump2.txt > ram:dump_diff.txt

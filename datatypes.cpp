@@ -47,14 +47,36 @@ char *_hex_( char *token_buffer, const char **ptr)
 	return token_buffer;
 }
 
-char *_number_( char *token_buffer, const char **ptr)
+char *_number_( char *token_buffer, char *start, const char **ptr)
 {
 	BOOL neg = FALSE;
 	int number = 0;
 	int n;
 	const char *p = *ptr;
 
-	if (*p=='-') { neg = TRUE; p++; }
+
+	if (*p=='-')		// this might not be a number, it might be substract
+	{
+		const char *tp;	// tmp pointer
+
+		for (tp = p-1 ; (tp>start) ; tp-- )	// we count back words to start break on first symbol we find.
+		{
+			if ((*tp!=' ')||(*tp!='\t'))	// we ignore spaces and tabs
+			{
+				if (( *tp =='=' ) || (*tp=='>') || (*tp=='<'))	// check for valid negative symbol starts.
+				{
+					 neg = TRUE; p++; 
+					break;
+				}
+				else
+				{
+					// the char is not expected, maybe the last command was varibale or ')' symbol, or <> symbols
+					// this is a substract symbol not a number, so we exit...
+					return NULL;
+				}
+			}
+		}
+	}
 
 	for (;is_break_char(*p)==FALSE; p++)
 	{

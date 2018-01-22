@@ -96,7 +96,7 @@ struct native nativeList[]={
 		{0x04DC,"Line Input","I",312,1},
 		{0x04EC,"Run","I",168,1},
 		{0x04F6,"Run","I2",170,1},
-		{0x04FE,"Set Buffer","I",206,1},
+		{0x04FE,"Set Buffers","I",206,1},
 		{0x050E,"Mid$","22,0,0",383,-32768},
 		{0x051E,"Mid$","22,0",381,-32768},
 		{0x0528,"Left$","22,0",377,-32768},

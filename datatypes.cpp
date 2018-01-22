@@ -122,10 +122,17 @@ char *_string_( char *token_buffer, const char **ptr)
 
 	if (*s==0)	// string was unexpected terminated.
 	{
-		if ((last_token == 0) && (firstSymbol=='\''))	// if we are on new line, and ' symbol is used, then its not string but a rem.
+		if ((last_token == 0) && (firstSymbol=='\''))	// if we are on new line, and ' symbol is used, then its not a string but a rem.
 		{
 			token = 0x0652;
 			numStartEndSymbols = 1;
+
+			// skip space after rem symbol.
+			if (*((char *) (*ptr) + 1) == ' ') 
+			{
+				*ptr = (char *) (*ptr) + 1;
+				length --;
+			}
 		}
 		else 	 return NULL;
 	}

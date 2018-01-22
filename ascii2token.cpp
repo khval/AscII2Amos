@@ -197,11 +197,14 @@ void order_by_cmd_length_and_args()
 
 		for (i = 0 ; i<DCommands.size() - 1; i++ )
 		{
-			if ((DCommands[i]->len < DCommands[i+1]->len) || ( DCommands[i]->args < DCommands[i+1]->args))
+			if ((DCommands[i]->len < DCommands[i+1]->len) || 
+				(DCommands[i]->len == DCommands[i+1]->len) && ( DCommands[i]->args < DCommands[i+1]->args))
 			{
+				sorted = TRUE;
 				tmp = DCommands[i];
 				DCommands[i] = DCommands[i+1];
 				DCommands[i+1] = tmp;
+				break;
 			}
 		}
 	} while (sorted);
@@ -266,7 +269,9 @@ struct find_token_return find_token(const char **input )
 		{
 			c = ((char *) *input ) [ DCommands[i] -> len ];
 
-			if ((c==0)||(c=='(')||(c==' '))		// the correct terminated command name in a prompt.
+			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
+
+			if ((c==0)||(c=='(')||(c==' ')||(c=='='))		// the correct terminated command name in a prompt.
 			{
 				// so we found a command with right name, but does have correct number paramiters?
 
@@ -327,6 +332,11 @@ int reformat_string(char *str)
 
 	dest = str;
 	while ((*str==' ')||(*str=='\t')) { str++; level+= *str==' ' ? 1 : 3 ; }	// if line starts with tabs or spaces, AMOS don't use tabs
+
+	// need this, rem's should not be formated.
+
+	if (strncasecmp(str,"rem ",4)==0)  return level;
+	if (*str=='\'') return level;
 
 	for (ptr=str;*ptr;ptr++)
 	{
@@ -411,7 +421,7 @@ void  interactiveAmosCommandLine()
 
 	do
 	{
-		printf("\nEnter AMOS command line:\n");
+		printf("\n\nEnter AMOS command line:\n");
 		getline(cin, line);
 
 		reformated_str = strdup( line.c_str() );
@@ -451,6 +461,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	
 		if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
 		{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ret = _string_(ptr_token_buffer, &ptr );
 
 			if (ret == NULL)
@@ -463,21 +474,25 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 		}
 		else	if (is_bin(ptr))
 		{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_hex(ptr))
 		{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_float(ptr))
 		{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_number(ptr))
 		{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ret = _number_(ptr_token_buffer, &ptr );
 			if (ret) ptr_token_buffer = ret;
 		}
@@ -486,18 +501,14 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 		{
 			if (!ret)
 			{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = symbolToken(ptr_token_buffer , &ptr);
 				if (ret) ptr_token_buffer = ret;
 			}
 
-			if (!ret)
-			{
-				ret = specialToken(ptr_token_buffer , &ptr);
-				if (ret) ptr_token_buffer = ret;	
-			}
-
 			if (!ret)	//  its not a special command, and its not symbolToken.
 			{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 				struct find_token_return info = find_token( &ptr );
 				if (info.token)
 				{
@@ -515,18 +526,27 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 
 			if (!ret)
 			{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
+				ret = specialToken(ptr_token_buffer , &ptr);
+				if (ret) ptr_token_buffer = ret;	
+			}
+
+			if (!ret)
+			{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = _variable_(ptr_token_buffer, &ptr );
 				if (ret) ptr_token_buffer = ret;	
 			}
 
 			if (!ret)
 			{
+printf("%s:%d\n",__FUNCTION__,__LINE__);
 				printf("**break - can't decode\n");
 				break;
 			}
 		}
 
-		if (*ptr==' ') ptr++;
+		while ((*ptr==' ')||(*ptr=='\t')) ptr++;
 	} while ( *ptr );
 
 	ptr_token_buffer = _end_of_line_(ptr_token_buffer );
@@ -534,6 +554,15 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	return ptr_token_buffer;
 }
 
+void list_commands_info()
+{
+	int i;
+
+	for (i = 0 ; i<DCommands.size() - 1; i++ )
+	{
+		printf("%02d,%02d - %s\n", DCommands[i]->len, DCommands[i]->args, DCommands[i]->name);
+	}
+}
 
 void free_commands()
 {
@@ -568,6 +597,8 @@ int main(int args, char **arg)
 		extensions_to_commands();
 		free_extensions();
 		order_by_cmd_length_and_args();
+
+list_commands_info();
 
 		if (args==1)
 		{

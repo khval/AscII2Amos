@@ -124,6 +124,9 @@ void Capitalize(char *str)
 //			0--> function that returns a integer
 //			1--> function that returns a float
 //			2--> function that returns a string
+//-- Not documented--
+//			3--> is string used on AMAL command, 3 is also used other commands, the diff between 2 and 3 I don't know.
+//-- End of not documented
 //			V--> reserved variable. In that case, you must
 //				state the type int-float-string
 //	- If your instruction does not need parameters, then you stop
@@ -136,7 +139,7 @@ BOOL return_value(const char *args)
 {
 	char rc;
 	rc = args ? args[0] : 0;
-	return ((rc>='0') && (rc<='2')) ? TRUE : FALSE;
+	return ((rc>='0') && (rc<='3')) ? TRUE : FALSE;
 }
 
 int number_of_args(const char *aptr)
@@ -152,7 +155,7 @@ int number_of_args(const char *aptr)
 
 	while (rc != 0)
 	{
-		args += ((rc>='0') && (rc<='2')) ? 1 : 0;
+		args += ((rc>='0') && (rc<='3')) ? 1 : 0;
 		aptr++;	// next
 		rc = *aptr;
 	}

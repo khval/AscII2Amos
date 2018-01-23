@@ -150,6 +150,8 @@ int number_of_args(const char *aptr)
 	if (aptr == NULL) return 0;
 	if (aptr[0] == 0) return 0;
 
+	if (*aptr=='V')	aptr++;	// any function that start with V is bull shit, I think.
+
 	aptr++; // skip return type.
 	rc = *aptr;	
 

@@ -122,7 +122,6 @@ char *_variable_( char *token_buffer, const char **ptr)
 			case '+':
 			case '-':
 			case '/':
-			case '[':
 			case ']':
 			case '(':
 			case ')':
@@ -138,6 +137,12 @@ char *_variable_( char *token_buffer, const char **ptr)
 			case '$':	flags = 2; 
 					_break = TRUE;
 					break;
+			case '[':		// this is a function with args
+					token = 0x0012;
+					_break = TRUE;
+					s--;		// this not part of the name.
+					break;
+
 			case ':':	if (last_token == 0)
 					{
 						token = 0x000C;
@@ -235,6 +240,11 @@ int get_parmeters_count( const char *str , int parentheses)
 	{
 		if (((is_string_double)||(is_string_single)) == FALSE)
 		{
+
+			if ((parentheses == 0)&&(*ptr==')'))
+			{
+				return (comma>0) ? (comma+1) : (has_ascii ? 1 : 0) ;
+			}
 
 			if (strncasecmp(ptr," to ",4)==0)
 			{

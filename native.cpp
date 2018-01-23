@@ -36,7 +36,7 @@ struct native nativeList[]={
 		{0x0214,"Doscall","00",1,598},
 		{0x0222,"Intcall","00",1,599},
 		{0x0230,"Freeze","I",1048,1},
-		{0x023C,"For","",229,1},
+//		{0x023C,"For","",229,1},
 		{0x0246,"Next","",230,1},
 		{0x0250,"Repeat","",233,1},
 		{0x025C,"Until","",234,1},
@@ -189,6 +189,7 @@ struct native nativeList[]={
 		{0x09EA,"Screen Open","I0,0,0,0,0",847,1},
 		{0x0A04,"Screen Close","I0",848,1},
 		{0x0A18,"Screen Display","I0,0,0,0,0",849,1},
+		{0x0A18,"Screen Display","I0"},		// added used as: Channel 0 To Screen Display 0
 		{0x0A36,"Screen Offset","I0,0,0",850,1},
 		{0x0A4E,"Screen Size","",1188,1188},
 		{0x0A5E,"Screen Colour","0",1,834},

@@ -2,7 +2,7 @@ struct native
 {
 	unsigned short token;
 	const char *name;
-	const char *arg;
+	const char *args;
 	unsigned short notUsed;
 	unsigned short notUsed2;
 };

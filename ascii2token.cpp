@@ -331,7 +331,7 @@ int reformat_string(char *str)
 	int level = 0;
 
 	dest = str;
-	while ((*str==' ')||(*str=='\t')) { str++; level+= *str==' ' ? 1 : 3 ; }	// if line starts with tabs or spaces, AMOS don't use tabs
+	for ( ; (*str==' ')||(*str=='\t') ; str ++) { level+= (*str==' ') ? 1 : 3 ; }	// if line starts with tabs or spaces, AMOS don't use tabs
 
 	// need this, rem's should not be formated.
 
@@ -474,26 +474,26 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 		}
 		else	if (is_bin(ptr))
 		{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_hex(ptr))
 		{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_float(ptr))
 		{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
 		}
 		else if (is_number(ptr))
 		{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
-			ret = _number_(ptr_token_buffer, &ptr );
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+			ret = _number_(ptr_token_buffer, reformated_str,  &ptr );
 			if (ret) ptr_token_buffer = ret;
 		}
 					
@@ -501,14 +501,14 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 		{
 			if (!ret)
 			{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = symbolToken(ptr_token_buffer , &ptr);
 				if (ret) ptr_token_buffer = ret;
 			}
 
 			if (!ret)	//  its not a special command, and its not symbolToken.
 			{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				struct find_token_return info = find_token( &ptr );
 				if (info.token)
 				{
@@ -526,21 +526,21 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 
 			if (!ret)
 			{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = specialToken(ptr_token_buffer , &ptr);
 				if (ret) ptr_token_buffer = ret;	
 			}
 
 			if (!ret)
 			{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = _variable_(ptr_token_buffer, &ptr );
 				if (ret) ptr_token_buffer = ret;	
 			}
 
 			if (!ret)
 			{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				printf("**break - can't decode\n");
 				break;
 			}

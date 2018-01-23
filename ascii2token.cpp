@@ -102,11 +102,15 @@ char *_variable_( char *token_buffer, const char **ptr)
 	const char *s;
 	char *d;
 	BOOL _break = FALSE;
-
-	unsigned short token = 0x0006;
 	short unknown = 0;
 	char	length = 0;
 	char flags = 0;
+
+	// standard token is variable
+	unsigned short token = 0x0006;
+
+	// if last command was a Goto or Gosub, then this token should be a label.
+	if ((last_token == 0x02B2)||(last_token == 0x02A8)) token = 0x0018;
 
 	d = buffer;
 	for (s=*ptr; (_break == FALSE) && (*s) ;s++) 
@@ -231,21 +235,30 @@ int get_parmeters_count( const char *str , int parentheses)
 	{
 		if (((is_string_double)||(is_string_single)) == FALSE)
 		{
-			switch (*ptr)
-			{
-				case '(':	parentheses++;	break;
-				case ')':	parentheses--;		break;
 
-				case ':':	
+			if (strncasecmp(ptr," to ",4)==0)
+			{
+				if (parentheses == 0) comma++; 
+				ptr+=3;
+			}
+			else
+			{
+				switch (*ptr)
+				{
+					case '(':	parentheses++;	break;
+					case ')':	parentheses--;		break;
+
+					case ':':	
 						return (comma>0) ? (comma+1) : (has_ascii ? 1 : 0)  ;
 						// exit end of this command.
 
-				case ',':	if (parentheses == 0) comma++; break;
+					case ',':	if (parentheses == 0) comma++; break;
 
-				case '\t':
-				case ' ':	break; // ignore spaces and tabs.
+					case '\t':
+					case ' ':	break; // ignore spaces and tabs.
 
-				default:	has_ascii = TRUE;
+					default:	has_ascii = TRUE;
+				}
 			}
 		}
 

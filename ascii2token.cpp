@@ -62,7 +62,7 @@ char *specialToken(char *token_buffer, const char **ptr)
 		{
 			c = ((char *) (*ptr)) [ strlen(itm ->name) ];
 
-			if ((c==' ')||(c=='(')||(c==0))		// command needs to terminated correct to be vaild.
+			if ((c==' ')||(c=='(')||(c==0)||((c>='0')&&(c<='9')) )		// command needs to terminated correct to be vaild.
 			{
 				token_buffer = itm->fn( token_buffer, ptr );
 				*ptr = ((char *) (*ptr)+l);	// next;
@@ -292,9 +292,9 @@ struct find_token_return find_token(const char **input )
 		{
 			c = ((char *) *input ) [ DCommands[i] -> len ];
 
-			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
+//			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
 
-			if ((c==0)||(c=='(')||(c==' ')||(c=='='))		// the correct terminated command name in a prompt.
+			if ((c==0)||(c=='(')||(c==' ')||(c=='=')||((c>='0')&&(c<='9')))		// the correct terminated command name in a prompt.
 			{
 				// so we found a command with right name, but does have correct number paramiters?
 

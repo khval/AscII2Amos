@@ -346,7 +346,7 @@ struct find_token_return find_token(const char **input )
 
 //			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
 
-			if ((c==0)||(c=='(')||(c==' ')||(c=='=')||((c>='0')&&(c<='9')))		// the correct terminated command name in a prompt.
+			if ((c==0)||(c=='<')||(c=='>')||(c=='/')||(c=='*')||(c=='-')||(c=='+')||(c==',')||(c=='(')||(c==')')||(c=='[')||(c==']')||(c==' ')||(c=='=')||((c>='0')&&(c<='9')))		// the correct terminated command name in a prompt.
 			{
 				// so we found a command with right name, but does have correct number paramiters?
 

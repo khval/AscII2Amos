@@ -8,12 +8,15 @@ BOOL is_break_char( char c )
 	switch (c)
 	{
 		case ' ': return TRUE;
+		case '\t': return TRUE;
 		case ':': return TRUE;
 		case ';': return TRUE;
 		case ',': return TRUE;
 		case '+': return TRUE;
 		case '-': return TRUE;
 		case '*': return TRUE;
+		case '<': return TRUE;
+		case '>': return TRUE;
 		case '(': return TRUE;
 		case ')': return TRUE;
 		case '[': return TRUE;

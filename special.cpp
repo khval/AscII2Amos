@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <proto/exec.h>
 #include "support_functions.h"
 #include "special.h"
 
@@ -8,10 +9,10 @@ struct special Special[]=
 {
 	{"Rem",cmdRem},
 	{"On",cmdOn},
-	{"Else",cmdElse},
 	{"Data",cmdData},
-	{"ElseIf",cmdElseIf},
-	{"ExitIf",cmdExitIf},
+	{"Else If",cmdElseIf},
+	{"Else",cmdElse},
+	{"Exit If",cmdExitIf},
 	{"Then",cmdThen},
 	{"Equ",cmdEqu},
 	{"Lvo",cmdLvo},

@@ -96,7 +96,41 @@ char *_end_of_line_( char *token_buffer )
 	return token_buffer;
 }
 
-char *_variable_( char *token_buffer, const char **ptr)
+BOOL chars_before( const char *start, const char *at )
+{
+	const char *p;
+
+	for ( p = at; p>=start; p--)
+	{
+		if (*p==':') break;		// break on before command
+
+		if ((*p!=' ')&&(*p!='\t'))
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+BOOL chars_after( const char *at )
+{
+	const char *p;
+
+	for ( p = at; *p!=0; p++)
+	{
+		if (*p==':') break;		// break on after command
+
+		if ((*p!=' ')&&(*p!='\t'))
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+char *_variable_( char *token_buffer, const char *start, const char **ptr)
 {
 	char buffer[1000];
 	const char *s;
@@ -109,8 +143,8 @@ char *_variable_( char *token_buffer, const char **ptr)
 	// standard token is variable
 	unsigned short token = 0x0006;
 
-	// if last command was a Goto or Gosub, then this token should be a label.
-	if ((last_token == 0x02B2)||(last_token == 0x02A8)) token = 0x0018;
+	// if last command was a Goto, Gosub, Resume then this token should be a label.
+	if ((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330)) token = 0x0018;
 
 	d = buffer;
 	for (s=*ptr; (_break == FALSE) && (*s) ;s++) 
@@ -134,7 +168,8 @@ char *_variable_( char *token_buffer, const char **ptr)
 			case '#':	flags = 1;	
 					_break = TRUE;
 					break;
-			case '$':	flags = 2; 
+
+			case '$':	flags = 2;	
 					_break = TRUE;
 					break;
 			case '[':		// this is a function with args
@@ -161,11 +196,26 @@ char *_variable_( char *token_buffer, const char **ptr)
 
 	if (*ptr == s) return NULL;	// string did not change so it can't be variale
 
+	if (token == 0x0006)	// in some cases it might not be variable, can be a function.
+	{
+		if ( (chars_before(start,((char *) *ptr)-1) == FALSE) && (chars_after(s) == FALSE ) )
+		{
+			token = 0x0012;
+		}
+	}
+
 	*ptr = s;
 
-	printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), flags, buffer, length &1 ? ",00" : "");
-
-	token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), flags, buffer );
+	if (token == 0x0006)	// normal variables use this format.
+	{
+		printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), flags, buffer, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), flags, buffer );
+	}
+	else	// some token use this format.
+	{
+		printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length, flags, buffer, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length, flags, buffer );
+	}
 
 	return token_buffer;
 };
@@ -557,7 +607,7 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 			if (!ret)
 			{
 //printf("%s:%d\n",__FUNCTION__,__LINE__);
-				ret = _variable_(ptr_token_buffer, &ptr );
+				ret = _variable_(ptr_token_buffer, reformated_str, &ptr );
 				if (ret) ptr_token_buffer = ret;	
 			}
 

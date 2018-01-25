@@ -32,7 +32,9 @@ struct symbol Symbol[]=
 	{0xFFEC,"/"},
 	{0xFFB6,">"},
 	{0xFFAC,"<"},
-	{0xFFF6,"^"}
+	{0xFFF6,"^"},
+	{0xFF58,"and "},
+	{0xFF4C,"or "}
 };
 
 char *symbolToken(char *token_buffer, const char **ptr)

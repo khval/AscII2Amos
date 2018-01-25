@@ -1,8 +1,22 @@
 
+
 drugs$["cool"]
+
+	gosub somecrap
+
+	goto not_end
+
+end
 
 procedure drugs$[rock$]
 	print "my first test amos program is "; rock$
 end proc
 
 
+somecrap:
+		print "amiga"
+		return
+
+not_end:
+		print "but now we are at end"
+		end

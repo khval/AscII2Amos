@@ -63,7 +63,11 @@ char *_number_( char *token_buffer, char *start, const char **ptr)
 		{
 			if ((*tp!=' ')||(*tp!='\t'))	// we ignore spaces and tabs
 			{
-				if (( *tp =='=' ) || (*tp=='>') || (*tp=='<'))	// check for valid negative symbol starts.
+				if (
+//					( *tp =='=' ) || 		// this one, is too perfect, AmosPro don't do it.
+					(*tp=='>') || 
+					(*tp=='<')
+				)	
 				{
 					 neg = TRUE; p++; 
 					break;

@@ -11,8 +11,11 @@ class DynamicCommand
 	int args;
 	int comma;
 	BOOL return_value;
+	char *(*fn) ( char *,  const char **);
 
-	DynamicCommand(unsigned short token,unsigned short  extension, char *name,int args,BOOL return_value);
+	DynamicCommand(unsigned short token,unsigned short  extension, char *name,int args,BOOL return_value );
+	DynamicCommand( struct special *item );
+
 	DynamicCommand();
 	~DynamicCommand();
 };

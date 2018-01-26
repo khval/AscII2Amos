@@ -154,7 +154,8 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 
 			case ':':	if (last_token == 0)
 					{
-						token = 0x000C;
+						token = 0x0012;
+						s--;
 					}
 					else s--;
 
@@ -265,6 +266,8 @@ int get_parmeters_count( const char *str , int parentheses)
 	const char *ptr;
 	int comma = 0;
 
+	if (*str == ',') return 0;
+
 	for (ptr = str; *ptr; ptr++)
 	{
 		if (((is_string_double)||(is_string_single)) == FALSE)
@@ -296,7 +299,7 @@ int get_parmeters_count( const char *str , int parentheses)
 					case '\t':
 					case ' ':	break; // ignore spaces and tabs.
 
-					default:	has_ascii = TRUE;
+					default:	if (parentheses >-1) has_ascii = TRUE;
 				}
 			}
 		}
@@ -320,7 +323,7 @@ DynamicCommand *find_token(const char **input )
 		{
 			c = ((char *) *input ) [ DCommands[i] -> len ];
 
-//			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
+			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
 
 			if ((c==0)||(c=='<')||(c=='>')||(c=='/')||(c=='*')||(c=='-')||(c=='+')||(c==',')||(c=='(')||(c==')')||(c=='[')||(c==']')||(c==' ')||(c=='=')||((c>='0')&&(c<='9')))		// the correct terminated command name in a prompt.
 			{

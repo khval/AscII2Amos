@@ -45,34 +45,6 @@ void print_arg(char *arg)
 	printf("\n");
 }
 
-char *specialToken(char *token_buffer, const char **ptr)
-{
-	struct special *itm;
-	const char *s;
-	char c;
-	int l;
-
-	for (itm=Special;itm->name;itm++)
-	{
-		l = strlen(itm->name);
-
-//		printf("*%s*\n", itm -> name);
-
-		if ( strncasecmp( *ptr, itm->name, l) == 0 )
-		{
-			c = ((char *) (*ptr)) [ strlen(itm ->name) ];
-
-			if ((c==' ')||(c=='(')||(c==0)||((c>='0')&&(c<='9')) )		// command needs to terminated correct to be vaild.
-			{
-				token_buffer = itm->fn( token_buffer, ptr );
-				*ptr = ((char *) (*ptr)+l);	// next;
-				return token_buffer;
-			}
-		}
-	}
-	return NULL;
-}
-
 char *extensionToken(char *token_buffer, int token, int table )
 {
 	printf("[%04X,%02X,%02X,%04X] ",0x004E , table, 0, token );
@@ -229,15 +201,20 @@ vector<DynamicCommand *> DCommands;
 void init_cmd_list()
 {
 	DynamicCommand *_new;
+	struct special *specialItem;
 
 	for (struct native *item=nativeList; item -> name; item++)
 	{
-//		printf("[%s]\n", item -> name);
-
 		_new = new DynamicCommand( item -> token, 0, (char *) item -> name, 
 			number_of_args( item -> args ),
 			return_value( item -> args));
 
+		if (_new)	DCommands.push_back(_new);
+	}
+
+	for (specialItem=Special;specialItem->name;specialItem++)
+	{
+		_new = new DynamicCommand( specialItem );
 		if (_new)	DCommands.push_back(_new);
 	}
 }
@@ -331,9 +308,8 @@ int get_parmeters_count( const char *str , int parentheses)
 	return (comma>0) ? (comma+1) : (has_ascii ? 1 : 0) ;
 }
 
-struct find_token_return find_token(const char **input )
+DynamicCommand *find_token(const char **input )
 {
-	struct find_token_return ret;
 	int i;
 	char c;
 	int pc;
@@ -362,21 +338,14 @@ struct find_token_return find_token(const char **input )
 				if ( DCommands[i] -> args == pc ) 
 				{
 					print_arg( ((char *) (*input)) + DCommands[i]->len );
-
 					*input += DCommands[i] -> len;
-
-					ret.token = DCommands[i] -> token;
-					ret.extension = DCommands[i] -> extension;
-
-					return ret;
+					return DCommands[i] ;
 				}
 			}
 		}
 	}	
 
-	ret.token = 0;
-	ret.extension = 0;
-	return ret;
+	return NULL;
 }
 
 void list_commands()
@@ -584,26 +553,28 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 			if (!ret)	//  its not a special command, and its not symbolToken.
 			{
 //printf("%s:%d\n",__FUNCTION__,__LINE__);
-				struct find_token_return info = find_token( &ptr );
-				if (info.token)
+				DynamicCommand *info = find_token( &ptr );
+				if (info)
 				{
-					if (info.extension == 0)
+					if (info->extension == 0)
 					{
-						printf("[%04X] ", info.token);
-						ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info.token, "" );
+						if (info -> fn == NULL)
+						{
+							printf("[%04X] ", info->token);
+							ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info->token, "" );
+						}
+						else
+						{
+							 ret = ptr_token_buffer = info->fn( 
+									ptr_token_buffer, 
+									&ptr );
+						}
 					}
 					else
 					{
-						ret = ptr_token_buffer = extensionToken( ptr_token_buffer,  info.token, info.extension );
+						ret = ptr_token_buffer = extensionToken( ptr_token_buffer,  info->token, info->extension );
 					}
 				}
-			}
-
-			if (!ret)
-			{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-				ret = specialToken(ptr_token_buffer , &ptr);
-				if (ret) ptr_token_buffer = ret;	
 			}
 
 			if (!ret)

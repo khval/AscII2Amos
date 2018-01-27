@@ -154,8 +154,7 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 
 			case ':':	if (last_token == 0)
 					{
-						token = 0x0012;
-						s--;
+						token = 0x000C;		// 0x000C is label
 					}
 					else s--;
 
@@ -647,7 +646,7 @@ int main(int args, char **arg)
 		free_extensions();
 		order_by_cmd_length_and_args();
 
-list_commands_info();
+ // list_commands_info();
 
 		if (args==1)
 		{

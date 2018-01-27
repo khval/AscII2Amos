@@ -115,9 +115,6 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 	// standard token is variable
 	unsigned short token = 0x0006;
 
-	// if last command was a Goto, Gosub, Resume then this token should be a label.
-	if ((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330)) token = 0x0018;
-
 	d = buffer;
 	for (s=*ptr; (_break == FALSE) && (*s) ;s++) 
 	{
@@ -165,6 +162,12 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 				*d++=*s; length++;
 		}
 	}
+
+	// if last command was a Goto, Gosub, Resume then this token should be a label.
+	if (((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330))&&(flags == 0)) token = 0x0018;
+
+	// Prcedure name
+	if (last_token==0x0376) token = 0x0006;
 
 	*d = 0;
 
@@ -321,8 +324,6 @@ DynamicCommand *find_token(const char **input )
 		if (strncasecmp( *input, DCommands[i]->name, DCommands[i]->len ) == 0 )
 		{
 			c = ((char *) *input ) [ DCommands[i] -> len ];
-
-			printf("found name '%s' ------ line: %s\n", DCommands[i]->name, *input);
 
 			if ((c==0)||(c=='<')||(c=='>')||(c=='/')||(c=='*')||(c=='-')||(c=='+')||(c==',')||(c=='(')||(c==')')||(c=='[')||(c==']')||(c==' ')||(c=='=')||((c>='0')&&(c<='9')))		// the correct terminated command name in a prompt.
 			{

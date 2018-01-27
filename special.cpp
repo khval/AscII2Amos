@@ -13,6 +13,7 @@ struct special Special[]=
 	{"Else If",cmdElseIf},
 	{"Else",cmdElse},
 	{"Exit If",cmdExitIf},
+	{"Exit",cmdExit},
 	{"Then",cmdThen},
 	{"Equ",cmdEqu},
 	{"Lvo",cmdLvo},
@@ -63,8 +64,8 @@ char *cmdRem( char *token_buffer, const char **ptr)
 
 char *cmdExit( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x029E, 0 );
-	token_buffer = tokenWriter( token_buffer,0x029E,"4",0);
+	printf("[%04X, %08X] ", 0x029E, 0 );
+	token_buffer = tokenWriter( token_buffer,0x029E,"4", 0);
 	return token_buffer;
 }
 

@@ -66,18 +66,54 @@ char *symbolToken(char *token_buffer, const char **ptr)
 {
 	int n;
 	int l;
+	const char *name,*data;
+	char c,s;
+
+	data = *ptr;
 
 	for (n=0;n<sizeof(Symbol)/sizeof(struct symbol );n++)
 	{
-		l = strlen(Symbol[n].symbol);
+		name = Symbol[n].symbol;
+		l = strlen(name);
+		c = l>0? name[l-1] : 0;
 
-		if ( strncmp( *ptr, Symbol[n].symbol, l) == 0 )
+		if (c != ' ')
 		{
-			printf("[%04X] ",  Symbol[n].token);
+			if ( strncmp( data, name, l) == 0 )
+			{
+				printf("[%04X] ",  Symbol[n].token);
 
-			*ptr = (((char *) *ptr) + l);
-			token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
-			return token_buffer;
+				*ptr = (data + l);
+				token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
+				return token_buffer;
+			}
+		}
+		else
+		{
+			if ( strncmp( *ptr, name, l-1) == 0 )
+			{
+				BOOL valid = FALSE;
+				s = data[l-1];
+
+				if (s == '(')
+				{
+					*ptr = (data+l-1);
+					valid = TRUE;
+				}
+				else if (s == ' ')
+				{
+					*ptr = (data+l);
+					valid = TRUE;
+				}
+
+				if (valid)
+				{
+					printf("[%04X] ",  Symbol[n].token);
+					token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
+					return token_buffer;
+				}
+			}
+
 		}
 	}
 	return NULL;

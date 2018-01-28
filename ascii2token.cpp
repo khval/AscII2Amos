@@ -36,6 +36,8 @@ struct extension *extensions[extensions_max];
 
 unsigned short last_token_is;
 
+BOOL _error = FALSE;
+
 extern char *symbolToken(char *token_buffer, const char **ptr);
 
 void print_arg(char *arg)
@@ -373,6 +375,7 @@ void list_commands()
 
 int reformat_string(char *str)
 {
+	BOOL is_rem = FALSE;
 	BOOL is_str = FALSE;
 	char *dest;
 	char *ptr;
@@ -384,25 +387,36 @@ int reformat_string(char *str)
 
 	// need this, rem's should not be formated.
 
-	if (strncasecmp(str,"rem ",4)==0)  return level;
-	if (*str=='\'') return level;
+	if (strncasecmp(str,"rem ",4)==0) is_rem = TRUE;
+	if (*str=='\'') is_rem = TRUE;
 
-	for (ptr=str;*ptr;ptr++)
+	if (is_rem)
 	{
-		if (*ptr == '"') is_str = TRUE;
-
-		if (is_str)
+		for (ptr=str;*ptr;ptr++)
 		{
 			*dest++=*ptr;
 		}
-		else
-		{
-			if (*ptr == '\t') *ptr = ' ';		// tabs are not legal outside of strings
-			if ((lc != ' ')||(*ptr != ' ')) *dest++=*ptr;
-		}
-		lc = *ptr;
+		*dest = 0;
 	}
-	*dest = 0;
+	else
+	{
+		for (ptr=str;*ptr;ptr++)
+		{
+			if (*ptr == '"') is_str = TRUE;
+
+			if (is_str)
+			{
+				*dest++=*ptr;
+			}
+			else
+			{
+				if (*ptr == '\t') *ptr = ' ';		// tabs are not legal outside of strings
+				if ((lc != ' ')||(*ptr != ' ')) *dest++=*ptr;
+			}
+			lc = *ptr;
+		}
+		*dest = 0;
+	}
 	return level;
 }
 
@@ -424,7 +438,7 @@ void asciiAmosFile( const char *name, const char *outputfile )
 	{
 		fd = writeAMOSFileStart( outputfile );
 
-		while ( getline( myfile, line) )
+		while ( (getline( myfile, line)) && (_error == FALSE) )
 		{
 			reformated_str = strdup( line.c_str() );
 
@@ -488,7 +502,7 @@ void  interactiveAmosCommandLine()
 			writeAMOSLineAsFile( "amostest/ascii2amos.amos", src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 		}
 
-	} while ( line.length() != 0 );
+	} while ( line.length() != 0 ) ;
 }
 
 
@@ -517,6 +531,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 			if (ret == NULL)
 			{
 				printf("**break - string not terminated\n");
+				_error = TRUE;
 				break;
 			}
 

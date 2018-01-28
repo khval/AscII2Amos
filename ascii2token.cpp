@@ -279,7 +279,7 @@ int get_parmeters_count( const char *str , int parentheses)
 		if (*p!='(') return 0;		// this one is not valid
 	}
 
-	if (*str == ',') return 0;
+	if ((last_token!=0x0054)&&(last_token!=0x0000)&&(*str == ',')) return 0;	
 
 	for (ptr = str; *ptr; ptr++)
 	{

@@ -272,6 +272,13 @@ int get_parmeters_count( const char *str , int parentheses)
 	const char *ptr;
 	int comma = 0;
 
+	if (parentheses==-1)	// '(' symbol is expected
+	{
+		const char *p;
+		for (p=str;(*p==' ')||(*p=='\'');p++);	// skip spaces and tabs
+		if (*p!='(') return 0;		// this one is not valid
+	}
+
 	if (*str == ',') return 0;
 
 	for (ptr = str; *ptr; ptr++)
@@ -344,7 +351,7 @@ DynamicCommand *find_token(const char **input )
 
 				if ( DCommands[i] -> args == pc ) 
 				{
-					print_arg( ((char *) (*input)) + DCommands[i]->len );
+//					print_arg( ((char *) (*input)) + DCommands[i]->len );
 					*input += DCommands[i] -> len;
 					return DCommands[i] ;
 				}

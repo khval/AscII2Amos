@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <proto/exec.h>
-
 #include "support_functions.h"
 #include "datatypes.h"
 #include "what_is.h"
+#include "ascii2token.h"
+
+extern BOOL is_logical_operation( unsigned short token );		// part og symbol.cpp, don't have .h file so.
 
 char *_bin_( char *token_buffer, const char **ptr)
 {
@@ -57,28 +59,23 @@ char *_number_( char *token_buffer, char *start, const char **ptr)
 
 	if (*p=='-')		// this might not be a number, it might be substract
 	{
-		const char *tp;	// tmp pointer
+		printf("** last token %04x ***\n", last_token);
 
-		for (tp = p-1 ; (tp>start) ; tp-- )	// we count back words to start break on first symbol we find.
+		if (
+			(last_token == 0x0006) ||			// If token bedore the "-" symbol is variable 
+			is_logical_operation( last_token ) ||		// We just do what brain dead AMOSPro does here.
+			(last_token == 0x007C) ||			// ) symbol
+			(last_token == 0x005C) ||			// comma symbol, this is another stupid mistake AMOSPro do.
+			(last_token_is == is_command_type)||		// typical: Screen Width - number
+			(last_token_is == is_number_type)
+		)
 		{
-			if ((*tp!=' ')||(*tp!='\t'))	// we ignore spaces and tabs
-			{
-				if (
-//					( *tp =='=' ) || 		// this one, is too perfect, AmosPro don't do it.
-					(*tp=='>') || 
-					(*tp=='<')
-				)	
-				{
-					 neg = TRUE; p++; 
-					break;
-				}
-				else
-				{
-					// the char is not expected, maybe the last command was varibale or ')' symbol, or <> symbols
-					// this is a substract symbol not a number, so we exit...
-					return NULL;
-				}
-			}
+			// this is a substract symbol, exit here.
+			return NULL;
+		}
+		else
+		{
+			 neg = TRUE; p++; 
 		}
 	}
 

@@ -20,6 +20,7 @@
 #include "argflags.h"
 #include "native.h"
 #include "saveAmos.h"
+#include "ascii2token.h"
 
 #include <iostream>
 
@@ -30,9 +31,10 @@ using namespace std;
 
 ULONG flags = 0;
 char *filename = NULL;
-
 char src_token_buffer[1000];
 struct extension *extensions[extensions_max];
+
+unsigned short last_token_is;
 
 extern char *symbolToken(char *token_buffer, const char **ptr);
 
@@ -501,6 +503,8 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 				
 	ptr_token_buffer = _start_of_line_( ptr_token_buffer, 0, level + 1 );		// we don't know the length yet.
 
+	last_token_is = is_newline_type ;
+
 	ptr = reformated_str;
 	do
 	{
@@ -508,7 +512,6 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	
 		if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
 		{
-printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ret = _string_(ptr_token_buffer, &ptr );
 
 			if (ret == NULL)
@@ -518,44 +521,50 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 			}
 
 			ptr_token_buffer = ret;
+			last_token_is = is_string_type;
 		}
 		else	if (is_bin(ptr))
 		{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _bin_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
+			last_token_is = is_number_type;
 		}
 		else if (is_hex(ptr))
 		{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _hex_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
+			last_token_is = is_number_type;
 		}
 		else if (is_float(ptr))
 		{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ptr_token_buffer = _float_(ptr_token_buffer, &ptr );
 			ret = (char *) 1;
+			last_token_is = is_number_type;
 		}
 		else if (is_number(ptr))
 		{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 			ret = _number_(ptr_token_buffer, reformated_str,  &ptr );
-			if (ret) ptr_token_buffer = ret;
+			if (ret) 
+			{
+				ptr_token_buffer = ret;
+				last_token_is = is_number_type;
+			}
 		}
 					
 		if (!ret)
 		{
 			if (!ret)
 			{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = symbolToken(ptr_token_buffer , &ptr);
-				if (ret) ptr_token_buffer = ret;
+				if (ret)
+				{
+					ptr_token_buffer = ret;
+					last_token_is = is_symbol_type;
+				}
 			}
 
 			if (!ret)	//  its not a special command, and its not symbolToken.
 			{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				DynamicCommand *info = find_token( &ptr );
 				if (info)
 				{
@@ -565,31 +574,34 @@ printf("%s:%d\n",__FUNCTION__,__LINE__);
 						{
 							printf("[%04X] ", info->token);
 							ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info->token, "" );
+							last_token_is = is_command_type;
 						}
 						else
 						{
-							 ret = ptr_token_buffer = info->fn( 
-									ptr_token_buffer, 
-									&ptr );
+							ret = ptr_token_buffer = info->fn( ptr_token_buffer, &ptr );
+							last_token_is = is_command_type;
 						}
 					}
 					else
 					{
 						ret = ptr_token_buffer = extensionToken( ptr_token_buffer,  info->token, info->extension );
+						last_token_is = is_command_type;
 					}
 				}
 			}
 
 			if (!ret)
 			{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				ret = _variable_(ptr_token_buffer, reformated_str, &ptr );
-				if (ret) ptr_token_buffer = ret;	
+				if (ret)
+				{
+					ptr_token_buffer = ret;
+					last_token_is = is_var_type;
+				}
 			}
 
 			if (!ret)
 			{
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 				printf("**break - can't decode\n");
 				break;
 			}
@@ -633,6 +645,7 @@ int main(int args, char **arg)
 	const char *ptr, *next_ptr;
 	char *reformated_str;
 	char	*ptr_token_buffer;
+	const char *output_filename = "amostest/ascii2amos.amos";
 
 	flags = flag_verbose;
 
@@ -640,6 +653,7 @@ int main(int args, char **arg)
 	{
 		init_cmd_list();
 		if (args>1) filename = arg[1];
+		if (args>2) output_filename = arg[2];
 
 		init_extensions();
 		load_extensions( filename);
@@ -647,15 +661,13 @@ int main(int args, char **arg)
 		free_extensions();
 		order_by_cmd_length_and_args();
 
- // list_commands_info();
-
 		if (args==1)
 		{
 			interactiveAmosCommandLine();
 		}
 		else
 		{
-			asciiAmosFile( arg[1] , "amostest/ascii2amos.amos" );
+			asciiAmosFile( filename , output_filename );
 		}
 
 		free_commands();

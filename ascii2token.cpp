@@ -24,19 +24,107 @@
 
 #include <iostream>
 
+#include "ascii2token.exe_rev.h"
+STRPTR USED ver = (STRPTR) VERSTAG;
 
 using namespace std;
 
 // For this test we only have one command..
 
+struct cli_arg
+{
+	const char *arg;
+	int flag;
+	int type;
+	void *data;
+};
+
 ULONG flags = 0;
 char *filename = NULL;
 char src_token_buffer[1000];
 struct extension *extensions[extensions_max];
-
 unsigned short last_token_is;
-
 BOOL _error = FALSE;
+
+char *asc_filename = NULL;
+char *amos_filename = NULL;
+
+struct cli_arg arg_list[]=
+{
+	{"--verbose",flag_verbose,0,NULL},
+	{"-v",flag_verbose,0,NULL},
+	{"--help",flag_help,0,NULL},
+	{"-h",flag_help,0,NULL},
+	{"FROM", 0, e_string, &asc_filename},
+	{"-s",0, e_string, &asc_filename},
+	{"TO", 0, e_string, &amos_filename},
+	{"-o", 0, e_string, &amos_filename}
+};
+
+void print_help()
+{
+	printf("Ascii2Amos\n\n");
+	printf("Example:\n");
+	printf("\tAscii2Amos FROM source.asc TO dest.amos\n");
+	printf("OR\n");
+	printf("\tAscii2Amos -s source.asc -o dest.amos\n\n");
+	printf("-v,--verbose\n");
+	printf("\tShow tokens and other info\n\n");
+	printf("-h,--help\n");
+	printf("\tShow help\n\n");
+	printf("-s,FROM\n");
+	printf("\tAsci file from convert\n\n");
+	printf("-o,TO\n");
+	printf("\tAMOS file to create\n\n");
+}
+
+struct cli_arg *find_arg( char *str)
+{
+	struct cli_arg *arg;
+	int cnt=sizeof(arg_list) / sizeof(struct cli_arg);
+
+	for (arg = arg_list; arg < arg_list+cnt; arg++ )
+	{
+		if (strcasecmp(arg->arg,str)==0) return arg;
+	}
+	return NULL;
+}
+
+BOOL read_args(int args, char **arg)
+{
+	struct cli_arg *f;
+	int n;
+
+	flags = 0;
+
+	for (n=1; n<args;n++)
+	{
+		f = find_arg( arg[n] );
+		if (f)
+		{
+			if (f->flag) flags |= f-> flag;
+			if (f->data)
+			{
+				n++;
+				if (n<args)
+				{
+					switch (f->type)
+					{
+						case e_string:	
+							if (*((char **) f->data)) return FALSE;
+							*((char **) f->data) = strdup(arg[n]);
+					}
+				}
+			}
+		}
+		else return FALSE;
+	}
+
+	printf("%s\n",amos_filename);
+
+	return TRUE;
+}
+
 
 extern char *symbolToken(char *token_buffer, const char **ptr);
 
@@ -674,27 +762,48 @@ int main(int args, char **arg)
 	if (init())
 	{
 		init_cmd_list();
-		if (args>1) filename = arg[1];
-		if (args>2) output_filename = arg[2];
 
-		init_extensions();
-		load_extensions( filename);
-		extensions_to_commands();
-		free_extensions();
-		order_by_cmd_length_and_args();
-
-		if (args==1)
+		if (read_args(args,arg))
 		{
-			interactiveAmosCommandLine();
+
+			printf("flags %08x\n",flags);
+
+			if (flags & flag_help)
+			{
+				print_help();
+			}
+			else
+			{
+				init_extensions();
+				load_extensions( filename);
+				extensions_to_commands();
+				free_extensions();
+				order_by_cmd_length_and_args();
+
+				if ( ( asc_filename ) && ( amos_filename ) )
+				{
+					asciiAmosFile( asc_filename , amos_filename );
+				}
+				else
+				{
+					interactiveAmosCommandLine();
+				}
+			}
+
+			free_commands();
+
+			closedown();
 		}
 		else
 		{
-			asciiAmosFile( filename , output_filename );
+			print_help();
 		}
 
-		free_commands();
+		if (asc_filename) free(asc_filename);
+		if (amos_filename) free(amos_filename);
 
-		closedown();
+		asc_filename = NULL;
+		amos_filename = NULL;
 	}
 
 	return 0;

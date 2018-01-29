@@ -25,7 +25,7 @@ main_objects = init.cpp what_is.cpp  \
 		symbols.cpp \
 		SaveAmos.cpp
 
-main_SRCS = ascii2token.cpp
+main_SRCS = ascii2amos.cpp
 
 objects = $(main_objects:.cpp=.o)
 programs= $(main_SRCS:.cpp=.exe)

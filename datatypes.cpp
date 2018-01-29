@@ -5,7 +5,9 @@
 #include "datatypes.h"
 #include "what_is.h"
 #include "ascii2token.h"
+#include "argflags.h"
 
+extern ULONG flags;
 extern BOOL is_logical_operation( unsigned short token );		// part og symbol.cpp, don't have .h file so.
 
 char *_bin_( char *token_buffer, const char **ptr)
@@ -20,7 +22,7 @@ char *_bin_( char *token_buffer, const char **ptr)
 	}
 	*ptr = p;
 
-	printf("[%04X,%08X] ", 0x001E, number );
+	if (flags & flag_verbose) printf("[%04X,%08X] ", 0x001E, number );
 	token_buffer = tokenWriter( token_buffer, 0x001E, "4",  number );
 
 	return token_buffer;
@@ -43,7 +45,7 @@ char *_hex_( char *token_buffer, const char **ptr)
 	}
 	*ptr = p;
 
-	printf("[%04X,%08X] ", 0x0036, number );
+	if (flags & flag_verbose) printf("[%04X,%08X] ", 0x0036, number );
 	token_buffer = tokenWriter( token_buffer, 0x0036, "4",  number );
 
 	return token_buffer;
@@ -55,7 +57,6 @@ char *_number_( char *token_buffer, char *start, const char **ptr)
 	int number = 0;
 	int n;
 	const char *p = *ptr;
-
 
 	if (*p=='-')		// this might not be a number, it might be substract
 	{
@@ -90,7 +91,7 @@ char *_number_( char *token_buffer, char *start, const char **ptr)
 
 	if (neg) number = -number;
 
-	printf("[%04X,%08X] ", 0x003E, number );
+	if (flags & flag_verbose)  printf("[%04X,%08X] ", 0x003E, number );
 	token_buffer = tokenWriter( token_buffer,  0x003E, "4", number );
 
 	return token_buffer;
@@ -105,7 +106,7 @@ char *_float_( char *token_buffer, const char **ptr)
 	sscanf(*ptr, "%lf", &f );
 	number = toAmosFloat( f );
 
-	printf("[%04X,%08X] ", 0x0046, number );
+	if (flags & flag_verbose)  printf("[%04X,%08X] ", 0x0046, number );
 	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
 
 	s = *ptr;
@@ -173,12 +174,7 @@ char *_string_( char *token_buffer, const char **ptr)
 
 		*ptr = (((char *) *ptr) + length + numStartEndSymbols);
 
-/*
-		printf("[%04X,%04X,%s%s] ", token, length+ (length&1), dest, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1) , dest );
-*/
-
-		printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
+		if (flags & flag_verbose)  printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
 		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );
 
 		free(dest);

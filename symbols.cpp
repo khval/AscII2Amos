@@ -4,6 +4,9 @@
 #include <proto/exec.h>
 #include <proto/dos.h>
 #include "include/support_functions.h"
+#include "argflags.h"
+
+extern ULONG flags;
 
 struct symbol 
 {
@@ -81,7 +84,7 @@ char *symbolToken(char *token_buffer, const char **ptr)
 		{
 			if ( strncmp( data, name, l) == 0 )
 			{
-				printf("[%04X] ",  Symbol[n].token);
+				if (flags & flag_verbose) printf("[%04X] ",  Symbol[n].token);
 
 				*ptr = (data + l);
 				token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
@@ -108,7 +111,7 @@ char *symbolToken(char *token_buffer, const char **ptr)
 
 				if (valid)
 				{
-					printf("[%04X] ",  Symbol[n].token);
+					if (flags & flag_verbose)	printf("[%04X] ",  Symbol[n].token);
 					token_buffer = tokenWriter( token_buffer, Symbol[n].token, "" );
 					return token_buffer;
 				}

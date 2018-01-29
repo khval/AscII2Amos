@@ -40,7 +40,6 @@ struct cli_arg
 };
 
 ULONG flags = 0;
-char *filename = NULL;
 char src_token_buffer[1000];
 struct extension *extensions[extensions_max];
 unsigned short last_token_is;
@@ -51,12 +50,22 @@ char *amos_filename = NULL;
 
 struct cli_arg arg_list[]=
 {
+	// flag options
+
 	{"--verbose",flag_verbose,0,NULL},
 	{"-v",flag_verbose,0,NULL},
+
 	{"--help",flag_help,0,NULL},
 	{"-h",flag_help,0,NULL},
+
+	{"--Interactive",flag_Interactive,0,NULL },
+	{"-i",flag_Interactive,0,NULL },
+
+	// file options
+
 	{"FROM", 0, e_string, &asc_filename},
 	{"-s",0, e_string, &asc_filename},
+
 	{"TO", 0, e_string, &amos_filename},
 	{"-o", 0, e_string, &amos_filename}
 };
@@ -70,6 +79,8 @@ void print_help()
 	printf("\tAscii2Amos -s source.asc -o dest.amos\n\n");
 	printf("-v,--verbose\n");
 	printf("\tShow tokens and other info\n\n");
+	printf("-i,--Interactive\n");
+	printf("\tInteractive / debug mode\n\n");
 	printf("-h,--help\n");
 	printf("\tShow help\n\n");
 	printf("-s,FROM\n");
@@ -94,20 +105,36 @@ BOOL read_args(int args, char **arg)
 {
 	struct cli_arg *f;
 	int n;
-
 	flags = 0;
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
 
 	for (n=1; n<args;n++)
 	{
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 		f = find_arg( arg[n] );
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 		if (f)
 		{
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 			if (f->flag) flags |= f-> flag;
 			if (f->data)
 			{
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 				n++;
 				if (n<args)
 				{
+
+//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 					switch (f->type)
 					{
 						case e_string:	
@@ -119,8 +146,6 @@ BOOL read_args(int args, char **arg)
 		}
 		else return FALSE;
 	}
-
-	printf("%s\n",amos_filename);
 
 	return TRUE;
 }
@@ -146,7 +171,7 @@ char *extensionToken(char *token_buffer, int token, int table )
 
 char *_start_of_line_( char *token_buffer, char length, char level )
 {
-	printf("[%01X,%01X] ", length, level);
+	if (flags & flag_verbose) printf("[%02X,%02X] ", length, level);
 
 	token_buffer = tokenArgWriter( token_buffer, "1,1",  length, level );
 	return token_buffer;
@@ -154,7 +179,7 @@ char *_start_of_line_( char *token_buffer, char length, char level )
 
 char *_end_of_line_( char *token_buffer )
 {
-	printf("[%04X]", 0);
+	if (flags & flag_verbose) printf("[%04X]", 0);
 
 	token_buffer = tokenWriter( token_buffer, 0x0000, ""  );
 	return token_buffer;
@@ -202,7 +227,7 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 	BOOL _break = FALSE;
 	short unknown = 0;
 	char	length = 0;
-	char flags = 0;
+	char type = 0;
 
 	// standard token is variable
 	unsigned short token = 0x0006;
@@ -228,11 +253,11 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 					_break = TRUE;
 					break;
 
-			case '#':	flags = 1;	
+			case '#':	type = 1;	
 					_break = TRUE;
 					break;
 
-			case '$':	flags = 2;	
+			case '$':	type = 2;	
 					_break = TRUE;
 					break;
 			case '[':		// this is a function with args
@@ -256,7 +281,7 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 	}
 
 	// if last command was a Goto, Gosub, Resume then this token should be a label.
-	if (((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330))&&(flags == 0)) token = 0x0018;
+	if (((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330))&&(type == 0)) token = 0x0018;
 
 	// Prcedure name
 	if (last_token==0x0376) token = 0x0006;
@@ -277,13 +302,13 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 
 	if (token == 0x0006)	// normal variables use this format.
 	{
-		printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), flags, buffer, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), flags, buffer );
+		if (flags & flag_verbose ) printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), type, buffer, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), type, buffer );
 	}
 	else	// some token use this format.
 	{
-		printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length, flags, buffer, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length, flags, buffer );
+		if (flags & flag_verbose ) printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length, type, buffer, length &1 ? ",00" : "");
+		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length, type, buffer );
 	}
 
 	return token_buffer;
@@ -432,14 +457,16 @@ DynamicCommand *find_token(const char **input )
 				{
 					pc = get_parmeters_count( ((char *) (*input)) + DCommands[i]->len,  DCommands[i] -> return_value ? -1 : 0 );
 
-					printf("Token %04X: %s %s Args %d\n", DCommands[i] -> token, DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
-					printf("get_parmeters_count = %d\n", pc );
+					if (flags & flag_verbose ) 
+					{
+						printf("Token %04X: %s %s Args %d\n", DCommands[i] -> token, DCommands[i] -> return_value ? "=" : ":", DCommands[i]->name, DCommands[i]-> args );
+						printf("get_parmeters_count = %d\n", pc );
+					}
 				}
 				else pc = 0;
 
 				if ( DCommands[i] -> args == pc ) 
 				{
-//					print_arg( ((char *) (*input)) + DCommands[i]->len );
 					*input += DCommands[i] -> len;
 					return DCommands[i] ;
 				}
@@ -449,23 +476,6 @@ DynamicCommand *find_token(const char **input )
 
 	return NULL;
 }
-
-void list_commands()
-{
-	int i;
-
-	printf("-- start of command list --\n\n");
-
-	for (i = 0 ; i<DCommands.size() - 1; i++ )
-	{
-		printf("[%s]\n",DCommands[i] -> name);
-	}	
-
-	printf("-- end of command list --\n\n");
-}
-
-
-// return break point, to next command.
 
 
 int reformat_string(char *str)
@@ -539,7 +549,6 @@ void asciiAmosFile( const char *name, const char *outputfile )
 
 			if (reformated_str) if (reformated_str[0] != 0)
 			{
-				printf("%s\n",reformated_str);
 				ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
 
 				free(reformated_str);
@@ -548,7 +557,6 @@ void asciiAmosFile( const char *name, const char *outputfile )
 				// length should be writen to start of line as a char, length is in x * short
 				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
 				src_token_buffer[0] = (char) (bufferSize / 2) ;
-				printf("\n");
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
@@ -558,7 +566,6 @@ void asciiAmosFile( const char *name, const char *outputfile )
 				ptr_token_buffer = _end_of_line_( ptr_token_buffer );
 				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
 				src_token_buffer[0] = (char) (bufferSize / 2) ;
-				printf("\n");
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
@@ -593,8 +600,6 @@ void  interactiveAmosCommandLine()
 
 			// length should be writen to start of line as a char, length is in x * short
 			*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
-
-			writeAMOSLineAsFile( "amostest/ascii2amos.amos", src_token_buffer, (int) ptr_token_buffer - (int) src_token_buffer );
 		}
 
 	} while ( line.length() != 0 ) ;
@@ -682,7 +687,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 					{
 						if (info -> fn == NULL)
 						{
-							printf("[%04X] ", info->token);
+							if (flags & flag_verbose) printf("[%04X] ", info->token);
 							ret = ptr_token_buffer = tokenWriter( ptr_token_buffer, info->token, "" );
 							last_token_is = is_command_type;
 						}
@@ -725,16 +730,6 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	return ptr_token_buffer;
 }
 
-void list_commands_info()
-{
-	int i;
-
-	for (i = 0 ; i<DCommands.size() - 1; i++ )
-	{
-		printf("%02d,%02d - %s\n", DCommands[i]->len, DCommands[i]->args, DCommands[i]->name);
-	}
-}
-
 void free_commands()
 {
 	DynamicCommand *_item;
@@ -755,7 +750,6 @@ int main(int args, char **arg)
 	const char *ptr, *next_ptr;
 	char *reformated_str;
 	char	*ptr_token_buffer;
-	const char *output_filename = "amostest/ascii2amos.amos";
 
 	flags = flag_verbose;
 
@@ -763,19 +757,31 @@ int main(int args, char **arg)
 	{
 		init_cmd_list();
 
+		printf("%s:%d\n",__FUNCTION__,__LINE__);
+
 		if (read_args(args,arg))
 		{
-
-			printf("flags %08x\n",flags);
+			printf("%s:%d\n",__FUNCTION__,__LINE__);
 
 			if (flags & flag_help)
 			{
 				print_help();
 			}
+			else	if (flags & flag_Interactive )
+			{
+				init_extensions();
+				load_extensions( NULL );
+				extensions_to_commands();
+				free_extensions();
+				order_by_cmd_length_and_args();
+
+				flags |= flag_verbose;
+				interactiveAmosCommandLine();
+			}
 			else
 			{
 				init_extensions();
-				load_extensions( filename);
+				load_extensions( asc_filename);
 				extensions_to_commands();
 				free_extensions();
 				order_by_cmd_length_and_args();
@@ -786,13 +792,11 @@ int main(int args, char **arg)
 				}
 				else
 				{
-					interactiveAmosCommandLine();
+					print_help();
 				}
 			}
 
 			free_commands();
-
-			closedown();
 		}
 		else
 		{
@@ -805,6 +809,8 @@ int main(int args, char **arg)
 		asc_filename = NULL;
 		amos_filename = NULL;
 	}
+
+	closedown();	// not all libs needs to be opened to run closedown.
 
 	return 0;
 }

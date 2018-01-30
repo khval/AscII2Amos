@@ -164,7 +164,7 @@ void print_arg(char *arg)
 
 char *extensionToken(char *token_buffer, int token, int table )
 {
-	printf("[%04X,%02X,%02X,%04X] ",0x004E , table, 0, token );
+	if (flags & flag_verbose) printf("[%04X,%02X,%02X,%04X] ",0x004E , table, 0, token );
 	token_buffer = tokenWriter( token_buffer, 0x004E, "1,1,2", table,0, token );
 	return token_buffer;
 }
@@ -547,6 +547,8 @@ void asciiAmosFile( const char *name, const char *outputfile )
 		{
 			reformated_str = strdup( line.c_str() );
 
+			if (flags & flag_verbose) printf("%s\n",reformated_str);
+
 			if (reformated_str) if (reformated_str[0] != 0)
 			{
 				ptr_token_buffer = encode_line( reformated_str, src_token_buffer );
@@ -569,6 +571,8 @@ void asciiAmosFile( const char *name, const char *outputfile )
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
 				if (fd) writeAMOSFileBuffer( fd, src_token_buffer, bufferSize, tokenBlockSize );
 			}
+
+			if (flags & flag_verbose) printf("\n");
 		}
 
 		if (fd) writeAMOSFileEnd(fd);
@@ -757,12 +761,8 @@ int main(int args, char **arg)
 	{
 		init_cmd_list();
 
-		printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 		if (read_args(args,arg))
 		{
-			printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 			if (flags & flag_help)
 			{
 				print_help();

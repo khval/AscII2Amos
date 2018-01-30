@@ -3,7 +3,9 @@
 #include <proto/exec.h>
 #include "support_functions.h"
 #include "special.h"
+#include "argflags.h"
 
+extern short flags;
 
 struct special Special[]= 
 {
@@ -54,7 +56,7 @@ char *cmdRem( char *token_buffer, const char **ptr)
 
 	for ( ;*p;p++) length++;
 
-	printf("[%04X,%04X,%s%s] ", token, length, _start+4, length &1 ? ",00" : "");
+	if (flags & flag_verbose) printf("[%04X,%04X,%s%s] ", token, length, _start+4, length &1 ? ",00" : "");
 	token_buffer = tokenWriter( token_buffer, token, "2,s",  length , _start+4 );
 
 	*ptr = ((char *) *ptr) + length + 1;
@@ -64,21 +66,21 @@ char *cmdRem( char *token_buffer, const char **ptr)
 
 char *cmdExit( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %08X] ", 0x029E, 0 );
+	if (flags & flag_verbose) printf("[%04X, %08X] ", 0x029E, 0 );
 	token_buffer = tokenWriter( token_buffer,0x029E,"4", 0);
 	return token_buffer;
 }
 
 char *cmdFor( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x023C, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x023C, 0 );
 	token_buffer = tokenWriter( token_buffer,0x023C,"2",0);
 	return token_buffer;
 }
 
 char *cmdRepeat( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x0250, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x0250, 0 );
 	token_buffer = tokenWriter( token_buffer,0x0250, "2",0);
 	return token_buffer;
 }
@@ -87,91 +89,91 @@ char *cmdProcedure( char *token_buffer, const char **ptr)
 {
 	int flags = 0;
 
-	printf("[%04X, %04X] ", 0x0376, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x0376, 0 );
 	token_buffer = tokenWriter( token_buffer,0x0376,"4,2,1,1",0,0,flags,0);
 	return token_buffer;
 }
 
 char *cmdWhile( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x0268, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x0268, 0 );
 	token_buffer = tokenWriter( token_buffer,0x0268,"2",0);
 	return token_buffer;
 }
 
 char *cmdDo( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x027E, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x027E, 0 );
 	token_buffer = tokenWriter( token_buffer,0x027E,"2",0);
 	return token_buffer;
 }
 
 char *cmdIf( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x02BE, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x02BE, 0 );
 	token_buffer = tokenWriter( token_buffer,0x02BE,"2",0);
 	return token_buffer;
 }
 
 char *cmdOn( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %08X] ", 0x0316, 0 );
+	if (flags & flag_verbose) printf("[%04X, %08X] ", 0x0316, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x0316,"4",0);
 	return token_buffer;
 }
 
 char *cmdElse( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x02D0, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x02D0, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x02D0,"2",0);
 	return token_buffer;
 }
 
 char *cmdData( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x0404, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x0404, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x0404,"2",0);
 	return token_buffer;
 }
 
 char *cmdElseIf( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x25A4, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x25A4, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x25A4, "2",0);
 	return token_buffer;
 }
 
 char *cmdExitIf( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %08X] ", 0x0290, 0 );
+	if (flags & flag_verbose) printf("[%04X, %08X] ", 0x0290, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x0290, "4", 0);
 	return token_buffer;
 }
 
 char *cmdEqu( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X, %04X, %04X] ", 0x2A40, 0, 0, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X, %04X, %04X] ", 0x2A40, 0, 0, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x2A40, "2,2,2", 0, 0, 0);
 	return token_buffer;
 }
 
 char *cmdLvo( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X, %04X, %04X] ", 0x2A4A, 0, 0, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X, %04X, %04X] ", 0x2A4A, 0, 0, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x2A4A, " 2,2,2", 0, 0, 0 );
 	return token_buffer;
 }
 
 char *cmdUntil( char *token_buffer, const char **ptr)
 {
-	printf("[%04X, %04X] ", 0x025C, 0 );
+	if (flags & flag_verbose) printf("[%04X, %04X] ", 0x025C, 0 );
 	token_buffer = tokenWriter( token_buffer, 0x025C, "2", 0);
 	return token_buffer;
 }
 
 char *cmdThen( char *token_buffer, const char **ptr)
 {
-	printf("[%04X] ", 0x02C6 );
+	if (flags & flag_verbose) printf("[%04X] ", 0x02C6 );
 	token_buffer = tokenWriter( token_buffer, 0x02C6, "");
 	return token_buffer;
 }

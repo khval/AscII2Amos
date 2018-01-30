@@ -60,8 +60,6 @@ char *_number_( char *token_buffer, char *start, const char **ptr)
 
 	if (*p=='-')		// this might not be a number, it might be substract
 	{
-		printf("** last token %04x ***\n", last_token);
-
 		if (
 			(last_token == 0x0006) ||			// If token bedore the "-" symbol is variable 
 			is_logical_operation( last_token ) ||		// We just do what brain dead AMOSPro does here.

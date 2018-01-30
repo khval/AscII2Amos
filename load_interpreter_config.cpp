@@ -184,15 +184,11 @@ BOOL load_config_try_paths( const char *filename)
 }
 
 
-
-
 void load_extensions( const char *filename )
 {
 	char buffer[1000];
 	BOOL config_loaded = load_config_try_paths( filename );
 	int n;
-
-	printf("%s\n", config_loaded ? "condig loaded" : "config not loaded\n");
 
 	for (n=14;n<14+extensions_max;n++)
 	{

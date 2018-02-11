@@ -107,34 +107,18 @@ BOOL read_args(int args, char **arg)
 	int n;
 	flags = 0;
 
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 	for (n=1; n<args;n++)
 	{
-
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 		f = find_arg( arg[n] );
-
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
 
 		if (f)
 		{
-
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 			if (f->flag) flags |= f-> flag;
 			if (f->data)
 			{
-
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 				n++;
 				if (n<args)
 				{
-
-//printf("%s:%d\n",__FUNCTION__,__LINE__);
-
 					switch (f->type)
 					{
 						case e_string:	
@@ -280,11 +264,11 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 		}
 	}
 
-	// if last command was a Goto, Gosub, Resume then this token should be a label.
-	if (((last_token == 0x02B2)||(last_token == 0x02A8)||(last_token==0x0330))&&(type == 0)) token = 0x0018;
+	// if last command was a Gosub, Resume then this token should be a label.
+	if (((last_token == 0x02B2)||(last_token==0x0330))&&(type == 0)) token = 0x0018;
 
-	// Prcedure name
-	if (last_token==0x0376) token = 0x0006;
+	// Prcedure name, and Goto command uses this token
+	if ((last_token==0x0376)||(last_token == 0x02A8)) token = 0x0006;
 
 	*d = 0;
 
@@ -300,7 +284,7 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 
 	*ptr = s;
 
-	if (token == 0x0006)	// normal variables use this format.
+	if ((token == 0x0006)||(token == 0x000C))	// normal variables & labels use this format.
 	{
 		if (flags & flag_verbose ) printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), type, buffer, length &1 ? ",00" : "");
 		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), type, buffer );

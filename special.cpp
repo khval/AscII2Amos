@@ -57,7 +57,7 @@ char *cmdRem( char *token_buffer, const char **ptr)
 	for ( ;*p;p++) length++;
 
 	if (flags & flag_verbose) printf("[%04X,%04X,%s%s] ", token, length, _start+4, length &1 ? ",00" : "");
-	token_buffer = tokenWriter( token_buffer, token, "2,s",  length , _start+4 );
+	token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1) , _start+4 );
 
 	*ptr = ((char *) *ptr) + length + 1;
 	return token_buffer;

@@ -233,6 +233,7 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 			case ')':
 			case ',':
 			case '*':
+			case '^':
 					s--;	// this are not part of the variable name
 					_break = TRUE;
 					break;

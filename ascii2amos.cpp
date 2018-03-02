@@ -277,15 +277,18 @@ char *_variable_( char *token_buffer, const char *start, const char **ptr)
 
 	if (token == 0x0006)	// in some cases it might not be variable, can be a function.
 	{
+//		Funny amos pro used 0x0006 for procedure, in a test I wrote.
+/*
 		if ( (chars_before(start,((char *) *ptr)-1) == FALSE) && (chars_after(s) == FALSE ) )
 		{
 			token = 0x0012;
 		}
+*/
 	}
 
 	*ptr = s;
 
-	if ((token == 0x0006)||(token == 0x000C))	// normal variables & labels use this format.
+	if ((token == 0x0006)||(token == 0x0012)||(token == 0x000C))	// normal variables & labels use this format.
 	{
 		if (flags & flag_verbose ) printf("[%04X,%04X,%02X,%02X,%s%s] ", token, unknown, length+(length&1), type, buffer, length &1 ? ",00" : "");
 		token_buffer = tokenWriter( token_buffer, token, "2, 1, 1, s" , unknown, length+(length&1), type, buffer );

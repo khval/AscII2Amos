@@ -108,7 +108,8 @@ char *_float_( char *token_buffer, const char **ptr)
 	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
 
 	s = *ptr;
-	while ( (*s != ' ') && (*s != 0) && (*s) ) s++;
+	while ( (is_break_char(*s) == FALSE) && (*s) ) s++;
+
 	*ptr = s;
 
 	return token_buffer;

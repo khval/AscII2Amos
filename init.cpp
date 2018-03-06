@@ -8,8 +8,11 @@
 struct Library 				 *AmosExtensionBase = NULL;
 struct AmosExtensionIFace	 *IAmosExtension = NULL;
 
-struct Library 			 *AslBase = NULL;
-struct AslIFace 		 *IAsl = NULL;
+extern struct Library 		 *DOSBase ;
+extern struct DOSIFace	 *IDOS ;
+
+struct Library 		 *AslBase = NULL;
+struct AslIFace 	 *IAsl = NULL;
 
 BOOL open_lib( const char *name, int ver , const char *iname, int iver, struct Library **base, struct Interface **interface)
 {
@@ -30,6 +33,7 @@ BOOL open_lib( const char *name, int ver , const char *iname, int iver, struct L
 BOOL init()
 {
 	if ( ! open_lib( "asl.library", 0L , "main", 1, &AslBase, (struct Interface **) &IAsl  ) ) return FALSE;
+//	if ( ! open_lib( "dos.library", 0L , "main", 1, &DOSBase, (struct Interface **) &IDOS  ) ) return FALSE;
 	if ( ! open_lib( "amosextension.library", 1L , "main", 1, &AmosExtensionBase, (struct Interface **) &IAmosExtension  ) ) return FALSE;
 
 	return TRUE;
@@ -38,9 +42,11 @@ BOOL init()
 void closedown()
 {
 	if (IAmosExtension) DropInterface((struct Interface*) IAmosExtension); IAmosExtension = 0;
-	if (AmosExtensionBase) CloseLibrary(AmosExtensionBase); AmosExtensionBase = 0;
-
+//	if (IDOS) DropInterface((struct Interface*) IDOS); IDOS = 0;
 	if (IAsl) DropInterface((struct Interface*) IAsl); IAsl = 0;
+
+	if (AmosExtensionBase) CloseLibrary(AmosExtensionBase); AmosExtensionBase = 0;
+//	if (DOSBase) CloseLibrary(DOSBase); DOSBase = 0;
 	if (AslBase) CloseLibrary(AslBase); AslBase = 0;
 }
 

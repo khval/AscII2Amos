@@ -23,6 +23,7 @@ BOOL is_break_char( char c )
 		case '[': return TRUE;
 		case ']': return TRUE;
 		case '/': return TRUE;
+		case '=': return TRUE;
 		case 0: return TRUE;
 	}
 	return FALSE;

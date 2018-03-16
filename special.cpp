@@ -3,9 +3,10 @@
 #include <proto/exec.h>
 #include "support_functions.h"
 #include "special.h"
+#include "string.h"
 #include "argflags.h"
 
-extern short flags;
+extern ULONG flags;
 
 struct special Special[]= 
 {
@@ -37,12 +38,13 @@ char *cmdRem( char *token_buffer, const char **ptr)
 	const char *_start;
 	const char *p;
 	unsigned short length = 0;
+	int remLen = 0;
 
 	_start = *ptr;
 
 	// rem\0
 
-	if (_start[3]==0)
+	if ( strcasecmp(_start,"rem") ==0 )
 	{
 		*ptr = ((char *) *ptr) + 3;
 		return token_buffer;		
@@ -50,16 +52,15 @@ char *cmdRem( char *token_buffer, const char **ptr)
 
 	p =_start;
 
-	// rem{space}
-
-	 if (_start[3]==' ') p+=4;
+	if (strncasecmp(_start,"rem ",4) == 0 ) { remLen=4; p+=remLen; }
 
 	for ( ;*p;p++) length++;
 
-	if (flags & flag_verbose) printf("[%04X,%04X,%s%s] ", token, length, _start+4, length &1 ? ",00" : "");
-	token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1) , _start+4 );
+	if (flags & flag_verbose) printf("[%04X,%04X,%s%s] ", token, length + (length&1), _start+remLen, length &1 ? ",00" : "");
+	token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1) , _start+remLen );
 
 	*ptr = ((char *) *ptr) + length + 1;
+
 	return token_buffer;
 }
 

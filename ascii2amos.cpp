@@ -31,6 +31,8 @@ using namespace std;
 
 // For this test we only have one command..
 
+int _line_number = 0;
+
 struct cli_arg
 {
 	const char *arg;
@@ -527,6 +529,8 @@ void asciiAmosFile( const char *name, const char *outputfile )
 	unsigned int bufferSize = 0;
 	unsigned int tokenBlockSize = 0;
 
+	_line_number = 1;
+
 	if (myfile.is_open())
 	{
 		fd = writeAMOSFileStart( outputfile );
@@ -554,6 +558,8 @@ void asciiAmosFile( const char *name, const char *outputfile )
 			{
 				ptr_token_buffer = _start_of_line_( src_token_buffer, 0, 1 );
 				ptr_token_buffer = _end_of_line_( ptr_token_buffer );
+				_line_number++;
+
 				bufferSize = ((int) ptr_token_buffer - (int) src_token_buffer);
 				src_token_buffer[0] = (char) (bufferSize / 2) ;
 				tokenBlockSize +=  (int) ptr_token_buffer - (int) src_token_buffer;
@@ -622,7 +628,7 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 
 			if (ret == NULL)
 			{
-				printf("**break - string not terminated\n");
+				printf("**break - string not terminated, on line %d\n", _line_number);
 				_error = TRUE;
 				break;
 			}
@@ -718,6 +724,9 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	} while ( *ptr );
 
 	ptr_token_buffer = _end_of_line_(ptr_token_buffer );
+
+	_line_number ++;
+
 
 	return ptr_token_buffer;
 }

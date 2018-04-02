@@ -621,14 +621,18 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 	do
 	{
 		ret = NULL;
-	
-		if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
+
+		if (*ptr == 0)		// empty string.
+		{
+			break;
+		}
+		else	if ((*ptr =='"')||(*ptr =='\'')) 	// is string.
 		{
 			ret = _string_(ptr_token_buffer, &ptr );
 
 			if (ret == NULL)
 			{
-				printf("**break - string not terminated, on line %d\n", _line_number);
+				printf("**BREAK- string not terminated, on line %d\n", _line_number);
 				_error = TRUE;
 				break;
 			}
@@ -715,7 +719,9 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 
 			if (!ret)
 			{
-				printf("**break - can't decode\n");
+				printf("**BREAK - Can't decode, on line %d\n", _line_number);
+				printf("                  LINE:  '%s'\n",reformated_str);
+				_error = TRUE;
 				break;
 			}
 		}

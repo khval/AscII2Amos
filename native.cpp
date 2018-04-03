@@ -55,7 +55,7 @@ struct native nativeList[]={
 		{0x02E6,"On Error","",214,1},
 		{0x02F4,"On Break Proc","",213,1},
 		{0x0308,"On Menu","I0",395,-32768},
-		{0x0316,"On","",262,1},
+//		{0x0316,"On","",262,1},
 		{0x031E,"Resume Label","",217,1},
 		{0x0330,"Resume","",219,1},
 		{0x033C,"Pop Proc","",258,1},

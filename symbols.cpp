@@ -18,22 +18,23 @@ struct symbol logical_symbol[]=
 {
 	{0xFF8E,">="},	// numbers 
 	{0xFF7A,"<="},	// numbers
-	{0xFF84,"<="},
-	{0xFF98,">="},
+	{0xFF84,"=<"},
+	{0xFF98,"=>"},
 	{0xFF66,"<>"},
 	{0xFFA2,"="},
 	{0xFFB6,">"},
 	{0xFFAC,"<"},
 	{0xFF58,"and "},
-	{0xFF4C,"or "}
+	{0xFF4C,"or "},
+//	{0x,"xor "}
 };
 
 struct symbol Symbol[]=
 {
 	{0xFF8E,">="},	// numbers 
 	{0xFF7A,"<="},	// numbers
-	{0xFF84,"<="},
-	{0xFF98,">="},
+	{0xFF84,"=<"},
+	{0xFF98,"=>"},
 	{0xFF66,"<>"},
 	{0x0054,":"},
 	{0x005C,","},

@@ -101,11 +101,16 @@ char *_float_( char *token_buffer, const char **ptr)
 	double f;
 	const char *s;
 
+	printf("float\n");
+
 	sscanf(*ptr, "%lf", &f );
 	number = toAmosFloat( f );
 
 	if (flags & flag_verbose)  printf("[%04X,%08X] ", 0x0046, number );
 	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
+
+	if (token_buffer == NULL) printf("Str: '%s'\n",*ptr);
+
 
 	s = *ptr;
 	while ( (is_break_char(*s) == FALSE) && (*s) ) s++;

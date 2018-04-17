@@ -43,6 +43,9 @@ struct cli_arg
 
 ULONG flags = 0;
 char src_token_buffer[1000];
+
+char *src_token_buffer_end = src_token_buffer + sizeof(src_token_buffer);
+
 struct extension *extensions[extensions_max];
 unsigned short last_token_is;
 BOOL _error = FALSE;
@@ -522,7 +525,7 @@ char *encode_line(char *reformated_str, char	*ptr_token_buffer);
 void asciiAmosFile( const char *name, const char *outputfile )
 {
 	char *reformated_str;
-	char *ptr_token_buffer;
+	char *ptr_token_buffer = NULL;
 	string line;
 	ifstream myfile( name );
 	FILE *fd;
@@ -567,6 +570,8 @@ void asciiAmosFile( const char *name, const char *outputfile )
 			}
 
 			if (flags & flag_verbose) printf("\n");
+
+			if (ptr_token_buffer == NULL) break;
 		}
 
 		if (fd) writeAMOSFileEnd(fd);
@@ -579,7 +584,7 @@ void asciiAmosFile( const char *name, const char *outputfile )
 void  interactiveAmosCommandLine()
 {
 	char *reformated_str;
-	char *ptr_token_buffer;
+	char *ptr_token_buffer = NULL;
 	string line;
 
 	do
@@ -600,6 +605,7 @@ void  interactiveAmosCommandLine()
 			*src_token_buffer = ((int) ptr_token_buffer - (int) src_token_buffer) / 2 ;	
 		}
 
+		if (ptr_token_buffer == NULL) break;
 	} while ( line.length() != 0 ) ;
 }
 
@@ -724,9 +730,13 @@ char	* encode_line(char *reformated_str, char *ptr_token_buffer)
 				_error = TRUE;
 				break;
 			}
-		}
 
+			if (ptr_token_buffer==NULL) break;
+		}
 		while ((*ptr==' ')||(*ptr=='\t')) ptr++;
+
+		if (ptr_token_buffer==NULL) break;
+
 	} while ( *ptr );
 
 	ptr_token_buffer = _end_of_line_(ptr_token_buffer );

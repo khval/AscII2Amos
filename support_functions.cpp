@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <proto/exec.h>
+#include <proto/dos.h>
 
 int last_token = 0;
 
@@ -9,16 +10,33 @@ int last_token = 0;
 	*(( type * ) buffer) = (type) va_arg( list, int ); \
 	buffer+=sizeof( type ); 
 
+
+extern char src_token_buffer[];
+extern char *src_token_buffer_end;
+
 char *tokenWriter(char *buffer,unsigned short token , const char *fmt,   ... )
 {
 	int _len = 0;
-
 	char *sptr;
 	const char *c;
 	va_list l;
+
+	if ((buffer < src_token_buffer) || ( buffer > src_token_buffer_end - 10 ))
+	{
+		printf("shit bag, dog's poo...\n");
+
+		if ( buffer < src_token_buffer ) printf("below the buffer\n");
+		if ( buffer > src_token_buffer_end - 10 ) printf("over upper limit for line buffer\n");
+		printf("returning NULL and hope for safe exit\n\n");
+
+		Delay(2);
+
+		return NULL;
+	}	
+
 	va_start( l,fmt);
 
-	// write token to token buffer
+//	printf("<<%04x>>\n",token);
 
 	*(( unsigned short * ) buffer ) = token;
 	buffer +=sizeof( unsigned short );

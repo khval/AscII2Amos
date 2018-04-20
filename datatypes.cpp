@@ -101,18 +101,22 @@ char *_float_( char *token_buffer, const char **ptr)
 	double f;
 	const char *s;
 
-	printf("float\n");
-
 	sscanf(*ptr, "%lf", &f );
 	number = toAmosFloat( f );
 
 	if (flags & flag_verbose)  printf("[%04X,%08X] ", 0x0046, number );
-	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
-
-	if (token_buffer == NULL) printf("Str: '%s'\n",*ptr);
-
 
 	s = *ptr;
+
+	if (*s=='-')
+	{
+		token_buffer = tokenWriter( token_buffer, 0xFFCA, "" );
+		s++;
+	}
+
+	token_buffer = tokenWriter( token_buffer, 0x0046, "4", number );
+	if (token_buffer == NULL) printf("Str: '%s'\n",*ptr);
+
 	while ( (is_break_char(*s) == FALSE) && (*s) ) s++;
 
 	*ptr = s;
@@ -187,41 +191,77 @@ char *_string_( char *token_buffer, const char **ptr)
 	return token_buffer;
 };
 
+double getDouble(int data)
+{
+	int n = 0;
+	double u = 0.0f;
+
+	for (n=23;n>-1;n--)
+	{
+		if (data & (1<<n) )
+		{
+			u += 1.0f / (double) (1<<(23-n) );
+		}
+	}
+
+	return u;
+}
+
 int toAmosFloat(double v)
 {
 	int n;
 	int number1 = 0;
 	int data = 0;
-	int e =0;
+	int e =0, E = 1;
 	bool s = (v<0.0f) ;
 	double u;
+	double vv,uu;
+	bool success = false;
 
 	if (s) v=-v;
 
-	while (v>2) {e++; v/=2.0f; };
-	while (v<1) {e--; v*=2.0f; };
+	while (v>=2.0f) {e++; v/=2.0f; };
+	while (v<1.0f) {e--; v*=2.0f; };
 
+	uu = 0;
+	vv = v;
 	for (n=23;n>-1;n--)
 	{
 		u = 1.0f / (double) (1<<(23-n));
 	
-		if (v>u)
+		if (v>=u)
 		{
 			number1 |= (1<<n);
 			v -= u;
+			uu += u;
 		}
 	}
 
+	// correct for error
+
+	if ( uu<vv )
+	{
+		for (n = number1; n<((1<<24)-1);n++)
+		{
+			if (getDouble( n ) >= vv)
+			{
+				number1 = n;
+				break;
+			}
+		}
+	}
+
+
 	if (e>0) 
 	{
-		e++;
+		E = e+1;
 	}
 	else if (e<0)
 	{
-		e++;
+		E=(e+65);
 	}
 
-	data = number1 << 8 | (s ? 0x80 : 0x00) | (e & 0x7F);
+	data = number1 << 8 | (s ? 0x80 : 0x00) | (e>-1 ? 0x40 : 0x00) | ( E & 0x3F);
 
 	return data;
 }

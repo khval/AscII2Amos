@@ -542,7 +542,7 @@ void asciiAmosFile( const char *name, const char *outputfile )
 		{
 			reformated_str = strdup( line.c_str() );
 
-			if (flags & flag_verbose) printf("%s\n",reformated_str);
+			if (flags & flag_verbose) printf("%08d:%s\n", _line_number,reformated_str);
 
 			if (reformated_str) if (reformated_str[0] != 0)
 			{

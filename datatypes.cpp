@@ -183,7 +183,7 @@ char *_string_( char *token_buffer, const char **ptr)
 		*ptr = (((char *) *ptr) + length + numStartEndSymbols);
 
 		if (flags & flag_verbose)  printf("[%04X,%04X,%s%s] ", token, length, dest, length &1 ? ",00" : "");
-		token_buffer = tokenWriter( token_buffer, token, "2,s",  length , dest );
+		token_buffer = tokenWriter( token_buffer, token, "2,s",  length + (length&1), dest );
 
 		free(dest);
 	}
